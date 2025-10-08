@@ -140,7 +140,7 @@ function setControlsEnabled(enabled) {
 // --- 接続処理 ---
 document.getElementById("connect").onclick = async () => {
   if (!navigator.bluetooth) {
-    logTx("このブラウザはWeb Bluetoothをサポートしていません。\niPhoneの場合はWebBLEアプリをご利用ください。");
+    logTx("このブラウザはWeb Bluetoothをサポートしていません。\niPhoneの場合はBluefyなどをご利用ください。");
     return;
   }
 
