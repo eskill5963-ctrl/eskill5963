@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Web Serial Terminal</title>
+<style>
+  body { background:#111; color:#eee; font-family:monospace; padding:20px; }
+  input, button { font-family: monospace; font-size: 14px; }
+  input { width:300px; padding:5px; }
+  button { padding:5px 10px; margin-left:5px; }
+  .status { margin-left:10px; }
+  #logArea {
+    width:100%; 
+    height:300px; 
+    margin-top:10px; 
+    background:#000; 
+    color:#0f0; 
+    padding:10px; 
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  .log-send { color: yellow; }
+  .log-recv { color: lime; }
+  .log-info { color: cyan; }
+  .log-error { color: red; }
+  #toggleAutoScrollBtn.active { background-color: #333; color: lime; }
+  #toggleAutoScrollBtn { background-color: #222; color: #aaa; padding: 5px 10px; border: none; cursor: pointer; margin-top:5px; }
+  .control-bar { margin-top:8px; }
+</style>
+</head>
+<body>
+<h2>茨木工科高校Iot研究班　Web Serial Terminal</h2>
+
+<button id="connectBtn">接続</button>
+<span id="status" class="status">未接続</span><br><br>
+
+<form id="sendForm">
+  <input type="text" id="inputText" placeholder="ここに送信文字を入力">
+  <button type="submit">送信</button>
+</form>
+
+<button id="toggleAutoScrollBtn" class="active">自動スクロール: ON</button>
+
+<div id="logArea"></div>
+
+<div class="control-bar">
+  <button id="ctrlCBtn">REPL (Ctrl+C)</button>
+  <button id="ctrlDBtn">実行 (Ctrl+D)</button>
+  <button id="clearBtn">クリア</button>
+  <button id="saveBtn">保存</button>
+</div>
+
+<script>
+let port = null;
+let reader = null;
+let writer = null;
+let keepReading = false;
+let autoScroll = true;
+
+const connectBtn = document.getElementById('connectBtn');
+const statusSpan = document.getElementById('status');
+const inputText = document.getElementById('inputText');
+const logArea = document.getElementById('logArea');
+const sendForm = document.getElementById('sendForm');
+const clearBtn = document.getElementById('clearBtn');
+const saveBtn = document.getElementById('saveBtn');
+const toggleAutoScrollBtn = document.getElementById('toggleAutoScrollBtn');
+const ctrlCBtn = document.getElementById('ctrlCBtn');
+const ctrlDBtn = document.getElementById('ctrlDBtn');
+
+function appendLog(msg, cls='') {
+  const span = document.createElement('span');
+  span.textContent = msg + '\n';
+  if (cls) span.className = cls;
+  logArea.appendChild(span);
+  if (autoScroll) logArea.scrollTop = logArea.scrollHeight;
+}
+
+function removeAnsiCodes(s){
+  s = s.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '');
+  s = s.replace(/\x1B\][0-?]*;.*?\x07/g, '');
+  return s;
+}
+
+connectBtn.addEventListener('click', async () => {
+  if (!port) {
+    await openPort();
+  } else {
+    await closePort();
+  }
+});
+
+async function openPort(){
+  try {
+    if (!('serial' in navigator)) {
+      appendLog('[error] このブラウザは Web Serial API 非対応です', 'log-error');
+      return;
+    }
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    writer = port.writable.getWriter();
+    keepReading = true;
+    readLoop();
+    connectBtn.textContent = '切断';
+    statusSpan.textContent = '接続済み';
+    statusSpan.style.color = 'lime';
+    appendLog('[info] 接続しました', 'log-info');
+  } catch (err) {
+    appendLog('[error] 接続失敗: ' + err, 'log-error');
+    console.error(err);
+    await safeCleanup();
+  }
+}
+
+async function closePort(){
+  try {
+    keepReading = false;
+    if (reader) { try { await reader.cancel(); } catch(e){} try { reader.releaseLock(); } catch(e){} reader = null; }
+    if (writer) { try { await writer.close(); } catch(e){} try { writer.releaseLock(); } catch(e){} writer = null; }
+    if (port) { try { await port.close(); } catch(e){} port = null; }
+    connectBtn.textContent = '接続';
+    statusSpan.textContent = '切断済み';
+    statusSpan.style.color = '#aaa';
+    appendLog('[info] 切断しました', 'log-info');
+  } catch (err) {
+    appendLog('[error] 切断時のエラー: ' + err, 'log-error');
+    console.error(err);
+  }
+}
+
+async function readLoop(){
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  try {
+    while (keepReading && port && port.readable) {
+      reader = port.readable.getReader();
+      try {
+        while (keepReading) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          if (value) {
+            buffer += decoder.decode(value, { stream: true });
+            buffer = removeAnsiCodes(buffer);
+            const lines = buffer.split(/\r\n|\n|\r/);
+            buffer = lines.pop();
+            for (const line of lines) {
+              if (line.length > 0) appendLog('[受信] ' + line, 'log-recv');
+            }
+          }
+        }
+      } catch (readErr) {
+        console.warn('read loop error:', readErr);
+      } finally {
+        try { reader.releaseLock(); } catch(e) {}
+        reader = null;
+      }
+    }
+  } catch (err) {
+    console.error('readLoop outer error', err);
+    appendLog('[error] 読み取りループエラー: ' + err, 'log-error');
+  }
+}
+
+async function sendText(text) {
+  if (!writer) { appendLog('[error] ポート未接続です', 'log-error'); return; }
+  try {
+    const data = new TextEncoder().encode(text);
+    await writer.write(data);
+    appendLog('[送信] ' + text, 'log-send');
+  } catch (err) {
+    appendLog('[error] 送信エラー: ' + err, 'log-error');
+    console.error(err);
+  }
+}
+
+sendForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const t = inputText.value;
+  if (t && t.length > 0) {
+    sendText(t + '\r\n');
+    inputText.value = '';
+  }
+});
+
+inputText.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const t = inputText.value;
+    if (t && t.length > 0) {
+      sendText(t + '\r\n');
+      inputText.value = '';
+    }
+  }
+});
+
+clearBtn.addEventListener('click', () => { logArea.innerHTML = ''; });
+saveBtn.addEventListener('click', () => {
+  const textContent = logArea.innerText;
+  const blob = new Blob([textContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'serial_log.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+toggleAutoScrollBtn.addEventListener('click', () => {
+  autoScroll = !autoScroll;
+  toggleAutoScrollBtn.classList.toggle('active', autoScroll);
+  toggleAutoScrollBtn.textContent = autoScroll ? '自動スクロール: ON' : '自動スクロール: OFF';
+});
+
+async function sendControlChar(code, label){
+  if (!writer) { appendLog('[error] ポート未接続です', 'log-error'); return; }
+  try {
+    const arr = new Uint8Array([code]);
+    await writer.write(arr);
+    appendLog('[送信] ' + label, 'log-send');
+  } catch (err) {
+    appendLog('[error] 制御文字送信エラー: ' + err, 'log-error');
+  }
+}
+ctrlCBtn.addEventListener('click', () => sendControlChar(0x03, 'Ctrl+C'));
+ctrlDBtn.addEventListener('click', () => sendControlChar(0x04, 'Ctrl+D'));
+
+async function safeCleanup(){
+  try {
+    keepReading = false;
+    if (reader) { try { await reader.cancel(); } catch(e){} try { reader.releaseLock(); } catch(e){} reader = null; }
+    if (writer) { try { await writer.close(); } catch(e){} try { writer.releaseLock(); } catch(e){} writer = null; }
+    if (port) { try { await port.close(); } catch(e){} port = null; }
+  } catch(e){ console.warn('safeCleanup err', e); }
+}
+
+window.addEventListener('unload', async () => { await safeCleanup(); });
+</script>
+</body>
+</html>
