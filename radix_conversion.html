@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>基数変換トレーニング</title>
+<style>
+  body {
+    font-family: "Segoe UI", "メイリオ", sans-serif;
+    background: #f2f2f2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    transition: background 0.5s;
+  }
+  #game {
+    width: 360px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    padding: 18px;
+    text-align: center;
+  }
+  h1 {
+    font-size: 18px;
+    background: #222;
+    color: #fff;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .question {
+    margin: 16px 0 4px;
+    font-size: 14px;
+  }
+  .number {
+    font-size: 32px;
+    margin: 8px 0;
+  }
+  input[type="text"] {
+    width: 120px;
+    padding: 6px;
+    text-align: center;
+    font-size: 14px;
+  }
+  button {
+    padding: 6px 12px;
+    font-size: 14px;
+    margin-left: 6px;
+  }
+  .result {
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 10px;
+    background: #eee;
+    font-size: 13px;
+    min-height: 70px;
+  }
+  .effect-correct {
+    background: #ccf2ff;
+    animation: flash-correct 0.6s ease;
+  }
+  .effect-wrong {
+    background: #ffe6e6;
+    animation: flash-wrong 0.4s ease;
+  }
+  @keyframes flash-correct {
+    0% { background-color: #9ef; }
+    100% { background-color: #fff; }
+  }
+  @keyframes flash-wrong {
+    0% { background-color: #f99; }
+    100% { background-color: #fff; }
+  }
+  .info {
+    font-size: 12px;
+    color: #333;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div id="game">
+  <h1>基数変換トレーニング</h1>
+  <div class="info" id="stats">正答率: 0 / 0　スコア: 0</div>
+  <hr>
+  <div>
+    <select id="modeSelect">
+      <option value="7">random</option>
+      <option value="1">2→10</option>
+      <option value="2">10→2</option>
+      <option value="3">2→16</option>
+      <option value="4">16→2</option>
+      <option value="5">10→16</option>
+      <option value="6">16→10</option>
+    </select>
+    <label><input type="checkbox" id="levelChk"> Normalモード</label>
+  </div>
+
+  <div class="question" id="questionText"></div>
+  <div class="number" id="questionNum"></div>
+
+  <div>
+    <input type="text" id="answerInput" placeholder="答えを入力">
+    <button id="enterBtn">ENTER</button>
+  </div>
+
+  <div class="info" id="levelText">難易度: Easy</div>
+  <div class="result" id="resultBox">まだ回答していません</div>
+  <div class="info" style="margin-top:10px;">Ibaraki Technology High School</div>
+</div>
+
+<script>
+let x, mode, level_mode=1, set_mode=7;
+let score=0, correctRate=0, total=0;
+let old_x=0, old_ans="", old_mode=0, old_intext="";
+const qText = document.getElementById("questionText");
+const qNum = document.getElementById("questionNum");
+const input = document.getElementById("answerInput");
+const resultBox = document.getElementById("resultBox");
+const stats = document.getElementById("stats");
+const levelChk = document.getElementById("levelChk");
+const levelText = document.getElementById("levelText");
+const modeSelect = document.getElementById("modeSelect");
+const enterBtn = document.getElementById("enterBtn");
+
+init();
+
+function init(){
+  mode = Math.floor(Math.random()*6)+1;
+  x_random();
+  updateQuestion();
+}
+
+function updateQuestion(){
+  const questions = [
+    "問）次の２進数を１０進数に変換しなさい。",
+    "問）次の１０進数を２進数に変換しなさい。",
+    "問）次の２進数を１６進数に変換しなさい。",
+    "問）次の１６進数を２進数に変換しなさい。",
+    "問）次の１０進数を１６進数に変換しなさい。",
+    "問）次の１６進数を１０進数に変換しなさい。"
+  ];
+  qText.textContent = questions[mode-1];
+  if(mode==2||mode==5) qNum.textContent = x.toString(10);
+  if(mode==1||mode==3) qNum.textContent = x.toString(2);
+  if(mode==4||mode==6) qNum.textContent = x.toString(16).toUpperCase();
+  levelText.textContent = (level_mode==1) ? "難易度: Easy" :
+                          (level_mode==2) ? "難易度: Normal" : "難易度: Hard";
+  updateBackground();
+}
+
+function updateBackground(){
+  if(level_mode==1) document.body.style.background = "#eaffea";
+  else if(level_mode==2) document.body.style.background = "#d9e9ff";
+  else if(level_mode==3) document.body.style.background = "#fff3e6";
+}
+
+function x_random(){
+  if(level_mode==1){x=intRand(2,16);}
+  if(level_mode==1 && (mode==5||mode==6)){x=intRand(10,16);}
+  if(level_mode==2){x=intRand(16,128);}
+  if(level_mode==3){x=intRand(127,1024);}
+}
+function intRand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+
+function correctAnswer(){
+  switch(mode){
+    case 1: return x.toString(10);
+    case 2: return x.toString(2);
+    case 3: return x.toString(16).toUpperCase();
+    case 4: return x.toString(2);
+    case 5: return x.toString(16).toUpperCase();
+    case 6: return x.toString(10);
+  }
+}
+
+function baseLabel(n){
+  if(n===2) return "(2進数)";
+  if(n===10) return "(10進数)";
+  if(n===16) return "(16進数)";
+}
+
+function judgeAnswer(){
+  const ans = input.value.trim();
+  old_x = x;
+  old_intext = ans;
+  let correct = false;
+  try{
+    if(mode==1||mode==6){ correct = (x==parseInt(ans,10)); }
+    if(mode==2||mode==4){ correct = (x==parseInt(ans,2)); }
+    if(mode==3||mode==5){ correct = (x==parseInt(ans,16)); }
+  }catch(e){ correct=false; }
+  return correct;
+}
+
+function enterPush(){
+  if(!input.value.trim()) return;
+  const correct = judgeAnswer();
+  total++;
+  const correctAns = correctAnswer();
+
+  let fromBase, toBase;
+  switch(mode){
+    case 1: fromBase=2; toBase=10; break;
+    case 2: fromBase=10; toBase=2; break;
+    case 3: fromBase=2; toBase=16; break;
+    case 4: fromBase=16; toBase=2; break;
+    case 5: fromBase=10; toBase=16; break;
+    case 6: fromBase=16; toBase=10; break;
+  }
+
+  const html = `
+    ${baseLabel(fromBase)} ${formatNum(old_x, fromBase)} → ${baseLabel(toBase)} ${correctAns}<br>
+    あなたの解答：<b>${old_intext}</b>
+  `;
+
+  if(correct){
+    correctRate++;
+    score += getPoint();
+    effect("correct");
+    resultBox.innerHTML = `<b style="color:green;">○ 正解！</b><br>${html}`;
+  }else{
+    effect("wrong");
+    resultBox.innerHTML = `<b style="color:red;">× 不正解！</b><br>${html}`;
+  }
+
+  stats.textContent = `正答率: ${correctRate} / ${total}　スコア: ${Math.floor(score)}`;
+  input.value="";
+  old_mode = mode;
+  if(set_mode==7){ mode=Math.floor(Math.random()*6)+1; } else { mode=set_mode; }
+  if(levelChk.checked){
+    if(Math.random()<0.05){ level_mode=3; } else { level_mode=2; }
+  }else{
+    level_mode=1;
+  }
+  x_random();
+  updateQuestion();
+}
+
+function formatNum(val, base){
+  if(base==2) return val.toString(2);
+  if(base==10) return val.toString(10);
+  if(base==16) return val.toString(16).toUpperCase();
+}
+
+function getPoint(){
+  if(level_mode==1) return 1;
+  if(level_mode==2) return 6;
+  if(level_mode==3) return 15;
+  return 1;
+}
+
+function effect(type){
+  resultBox.classList.remove("effect-correct","effect-wrong");
+  void resultBox.offsetWidth;
+  resultBox.classList.add(type==="correct"?"effect-correct":"effect-wrong");
+}
+
+enterBtn.addEventListener("click", enterPush);
+input.addEventListener("keydown", e=>{ if(e.key==="Enter") enterPush(); });
+modeSelect.addEventListener("change", ()=>{
+  set_mode = parseInt(modeSelect.value);
+  if(set_mode==7){mode=Math.floor(Math.random()*6)+1;}
+  else{mode=set_mode;}
+  x_random();
+  updateQuestion();
+});
+levelChk.addEventListener("change", ()=>{
+  level_mode = levelChk.checked ? 2 : 1;
+  updateQuestion();
+});
+</script>
+</body>
+</html>
