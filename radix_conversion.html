@@ -166,7 +166,7 @@
     <label id="nativeToggle"><input type="checkbox" id="allowNative"> KB許可</label>
   </div>
 
-  <div class="info" id="levelText">難易度: Easy 4bitまで</div>
+  <div class="info" id="levelText">難易度: Easy (4bitまで)</div>
   <div class="result" id="resultBox">まだ回答していません</div>
 
   <!-- ソフトキーボード -->
@@ -238,8 +238,8 @@ function updateQuestion(){
   if(mode==2||mode==5) qNum.textContent = x.toString(10);
   if(mode==1||mode==3) qNum.textContent = x.toString(2);
   if(mode==4||mode==6) qNum.textContent = x.toString(16).toUpperCase();
-  levelText.textContent = (level_mode==1) ? "難易度: Easy 4bitまで" :
-                          (level_mode==2) ? "難易度: Normal 7bitまで" : "難易度: Hard 8bit以上";
+  levelText.textContent = (level_mode==1) ? "難易度: Easy (4bitまで)" :
+                          (level_mode==2) ? "難易度: Normal (7bitまで)" : "難易度: Hard (8bit以上)";
   document.body.className = level_mode==1?"easy-bg":level_mode==2?"normal-bg":"hard-bg";
 }
   
@@ -377,4 +377,5 @@ updateQuestion();
 </script>
 </body>
 </html>
+
 
