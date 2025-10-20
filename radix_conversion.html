@@ -2,13 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>基数変換トレーニング（ソフトキー対応）</title>
+<title>基数変換トレーニング（ソフトキー対応・Compact）</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   :root{
     --card-w:360px;
-    --btn-h:30px;
-    --kbd-gap:6px;
+    --btn-h:36px;
+    --kbd-gap:4px;
   }
   body {
     font-family: "Segoe UI", "メイリオ", sans-serif;
@@ -16,67 +16,70 @@
     display: flex;
     justify-content: center;
     align-items: start;
-    padding: 5px;
+    padding: 14px;
     min-height: 100vh;
     transition: background 0.5s;
   }
   #game {
     width: min(var(--card-w), 96vw);
     background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    padding: 14px;
+    border-radius: 10px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.15);
+    padding: 10px;
     text-align: center;
+  }
+  #footer {
+    margin-top: 6px;
   }
   h1 {
-    font-size: 18px;
+    font-size: 16px;
     background: #222;
     color: #fff;
-    padding: 8px;
-    border-radius: 8px;
-    margin: 0 0 10px 0;
+    padding: 6px;
+    border-radius: 6px;
+    margin: 0 0 8px 0;
   }
-  .top-row { display:flex; gap:8px; align-items:center; justify-content:space-between; margin-bottom:8px; }
+  .top-row { display:flex; gap:6px; align-items:center; justify-content:space-between; margin-bottom:6px; }
   .info {
-    font-size: 12px;
+    font-size: 11px;
     color: #333;
   }
-  select, label { font-size: 13px; }
-  .question { margin: 12px 0 4px; font-size: 14px; }
-  .number { font-size: 36px; margin: 8px 0; letter-spacing:2px; }
-  .answer-row { display:flex; justify-content:center; gap:8px; align-items:center; margin-top:4px; }
+  select, label { font-size: 12px; }
+  .question { margin: 8px 0 2px; font-size: 13px; }
+  .number { font-size: 28px; margin: 6px 0; letter-spacing:1px; }
+  .answer-row { display:flex; justify-content:center; gap:6px; align-items:center; margin-top:3px; }
   input[type="text"] {
-    width: 160px;
-    padding: 8px 10px;
+    width: 130px;
+    padding: 6px 8px;
     text-align: center;
-    font-size: 16px;
-    border-radius: 6px;
+    font-size: 14px;
+    border-radius: 5px;
     border: 1px solid #ccc;
     -webkit-user-select: text;
   }
-  #nativeToggle { font-size:12px; margin-left:6px; vertical-align:middle; }
+  #nativeToggle { font-size:11px; margin-left:4px; vertical-align:middle; }
   button.primary {
-    padding: 8px 12px;
-    font-size: 15px;
+    padding: 6px 10px;
+    font-size: 13px;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     background: #2b8bd3;
     color: white;
   }
   button.secondary {
-    padding: 8px 12px;
-    font-size: 14px;
-    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
     border: 1px solid #bbb;
     background: #fff;
   }
   .result {
     border-radius: 6px;
-    padding: 10px;
-    margin-top: 5px;
+    padding: 8px;
+    margin-top: 8px;
     background: #eee;
-    font-size: 13px;
-    min-height: 66px;
+    font-size: 12px;
+    min-height: 56px;
     text-align: left;
   }
   .effect-correct { background: #ccf2ff; animation: flash-correct 0.6s ease; }
@@ -93,30 +96,42 @@
   }
   .key {
     height: var(--btn-h);
-    border-radius: 8px;
-    font-size: 18px;
+    border-radius: 6px;
+    font-size: 16px;
     border: 1px solid #cfcfcf;
     background: linear-gradient(#fff,#f6f6f6);
     display:flex; align-items:center; justify-content:center;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
+  
+  /* A〜Fキーを少し濃い色に */
+  .key[data-key="A"],
+  .key[data-key="B"],
+  .key[data-key="C"],
+  .key[data-key="D"],
+  .key[data-key="E"],
+  .key[data-key="F"] {
+   background: linear-gradient(#e6e6ff, #ccccff);
+   border-color: #9999ff;
+   }
+  
   .key:active { transform: translateY(1px); }
   .key.del { background: linear-gradient(#ffecec,#ffdede); border-color:#f3a3a3; }
   .key.enter { grid-column: span 2; background: linear-gradient(#2b8bd3,#1e6fb2); color:#fff; border-color:#186090; }
-  .kbd .key.wide { grid-column: span 2; }
+  .key.clear { background: linear-gradient(#fdf5d6,#fdeaa3); border-color:#f0d24b; font-size:14px; }
 
-  /* レスポンシブでボタン大きめ */
+  /* レスポンシブ調整 */
   @media (max-width:420px){
-    :root{ --btn-h:56px; }
-    .number{ font-size:28px; }
-    input[type="text"]{ width: 140px; font-size:18px; }
+    :root{ --btn-h:46px; }
+    .number{ font-size:24px; }
+    input[type="text"]{ width:120px; font-size:15px; }
   }
 
-  /* 難易度背景カラー（bodyに適用されます） */
-  .easy-bg { background: #eaffea; }
-  .normal-bg { background: #f0ffff; }
-  .hard-bg { background: #ffe6e6; }
+  /* 難易度背景カラー */
+  .easy-bg { background: #ccffcc; }
+  .normal-bg { background: #c1c1ff; }
+  .hard-bg { background: #ffa8a8; }
 </style>
 </head>
 <body>
@@ -136,7 +151,7 @@
         <option value="5">10→16</option>
         <option value="6">16→10</option>
       </select>
-      <label style="margin-left:8px;">
+      <label style="margin-left:6px;">
         <input type="checkbox" id="levelChk"> Normalモード
       </label>
     </div>
@@ -148,50 +163,48 @@
   <div class="answer-row">
     <input type="text" id="answerInput" placeholder="答えを入力" readonly>
     <button class="primary" id="enterBtn">ENTER</button>
-
+    <label id="nativeToggle"><input type="checkbox" id="allowNative"> KB許可</label>
   </div>
 
   <div class="info" id="levelText">難易度: Easy</div>
-      <label id="nativeToggle"><input type="checkbox" id="allowNative"> 標準キーボードの有効化</label>
-
   <div class="result" id="resultBox">まだ回答していません</div>
 
-  <div class="info" style="margin-top:10px;">ibaraki Technology High School</div>
-
   <!-- ソフトキーボード -->
-  <div class="kbd" id="softKbd" aria-hidden="false">
-    <!-- 0-9 A-F, Del, Enter -->
-    <div class="key" data-key="0">0</div>
-    <div class="key" data-key="1">1</div>
-    <div class="key" data-key="2">2</div>
-    <div class="key" data-key="3">3</div>
+  <div class="kbd" id="softKbd">
+
+    <div class="key" data-key="A">A</div>
+    <div class="key" data-key="B">B</div>
+    <div class="key" data-key="C">C</div>
+    <div class="key del" id="delKey">Del</div>
+
+    <div class="key" data-key="7">7</div>
+    <div class="key" data-key="8">8</div>
+    <div class="key" data-key="9">9</div>
+    <div class="key" data-key="D">D</div>
 
     <div class="key" data-key="4">4</div>
     <div class="key" data-key="5">5</div>
     <div class="key" data-key="6">6</div>
-    <div class="key" data-key="7">7</div>
-
-    <div class="key" data-key="8">8</div>
-    <div class="key" data-key="9">9</div>
-    <div class="key" data-key="A">A</div>
-    <div class="key" data-key="B">B</div>
-
-    <div class="key" data-key="C">C</div>
-    <div class="key" data-key="D">D</div>
     <div class="key" data-key="E">E</div>
+
+    <div class="key" data-key="1">1</div>
+    <div class="key" data-key="2">2</div>
+    <div class="key" data-key="3">3</div>
     <div class="key" data-key="F">F</div>
 
-    <div class="key del" id="delKey">Del</div>
+    <div class="key clear" id="clearKey">Clear</div>
+    <div class="key" data-key="0">0</div>
     <div class="key wide enter" id="kbdEnter">ENTER</div>
+
   </div>
+
+  <div class="info" id="footer">&#169; 2025 Ibaraki Technology High School</div>
 </div>
 
 <script>
-/* --- 既存ロジック（移植済み機能） --- */
-let e_point=1,n_point=6,h_point=15;
 let x, mode, level_mode=1, set_mode=7;
 let score=0, correctRate=0, total=0;
-let old_x=0, old_ans="", old_mode=0, old_intext="";
+let old_x=0, old_intext="";
 
 const qText = document.getElementById("questionText");
 const qNum = document.getElementById("questionNum");
@@ -212,7 +225,6 @@ function init(){
   updateQuestion();
 }
 
-/* updateQuestion + background update */
 function updateQuestion(){
   const questions = [
     "問）次の２進数を１０進数に変換しなさい。",
@@ -228,18 +240,9 @@ function updateQuestion(){
   if(mode==4||mode==6) qNum.textContent = x.toString(16).toUpperCase();
   levelText.textContent = (level_mode==1) ? "難易度: Easy" :
                           (level_mode==2) ? "難易度: Normal" : "難易度: Hard";
-  updateBackground();
+  document.body.className = level_mode==1?"easy-bg":level_mode==2?"normal-bg":"hard-bg";
 }
 
-/* difficulty-based background */
-function updateBackground(){
-  document.body.classList.remove('easy-bg','normal-bg','hard-bg');
-  if(level_mode==1) document.body.classList.add('easy-bg');
-  else if(level_mode==2) document.body.classList.add('normal-bg');
-  else if(level_mode==3) document.body.classList.add('hard-bg');
-}
-
-/* random number generator */
 function x_random(){
   if(level_mode==1){x=intRand(2,16);}
   if(level_mode==1 && (mode==5||mode==6)){x=intRand(10,16);}
@@ -248,7 +251,6 @@ function x_random(){
 }
 function intRand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
-/* compute correct answer string */
 function correctAnswer(){
   switch(mode){
     case 1: return x.toString(10);
@@ -265,7 +267,6 @@ function baseLabel(n){
   if(n===16) return "(16進数)";
 }
 
-/* judge answer using parsing (same as p5 logic) */
 function judgeAnswer(){
   const ans = input.value.trim();
   old_x = x;
@@ -279,13 +280,11 @@ function judgeAnswer(){
   return correct;
 }
 
-/* ENTER押下時 */
 function enterPush(){
   if(!input.value.trim()) return;
   const correct = judgeAnswer();
   total++;
   const correctAns = correctAnswer();
-
   let fromBase, toBase;
   switch(mode){
     case 1: fromBase=2; toBase=10; break;
@@ -295,134 +294,85 @@ function enterPush(){
     case 5: fromBase=10; toBase=16; break;
     case 6: fromBase=16; toBase=10; break;
   }
-
-  const html = `
-    ${baseLabel(fromBase)} ${formatNum(old_x, fromBase)} → ${baseLabel(toBase)} ${correctAns}<br>
-    あなたの解答：<b>${escapeHtml(old_intext)}</b>
-  `;
-
-  if(correct){
-    correctRate++;
-    score += getPoint();
-    effect("correct");
-    resultBox.innerHTML = `<b style="color:green;">○ 正解！</b><br>${html}`;
-  }else{
+  const html = `${baseLabel(fromBase)} ${formatNum(old_x, fromBase)} → ${baseLabel(toBase)} ${correctAns}<br>
+                あなたの解答：<b>${old_intext}</b>`;
+  if(correct){ correctRate++; score+=getPoint(); effect("correct");
+    resultBox.innerHTML=`<b style="color:green;">○ 正解！</b><br>${html}`;
+  } else {
     effect("wrong");
-    resultBox.innerHTML = `<b style="color:red;">× 不正解！</b><br>${html}`;
+    resultBox.innerHTML=`<b style="color:red;">× 不正解！</b><br>${html}`;
   }
-
   stats.textContent = `正答率: ${correctRate} / ${total}　スコア: ${Math.floor(score)}`;
   input.value="";
-  old_mode = mode;
   if(set_mode==7){ mode=Math.floor(Math.random()*6)+1; } else { mode=set_mode; }
   if(levelChk.checked){
-    if(Math.random()<0.05){ level_mode=3; } else { level_mode=2; } // 5%でハード
-  }else{
-    level_mode=1;
-  }
+    if(Math.random()<0.05){ level_mode=3; } else { level_mode=2; }
+  }else level_mode=1;
   x_random();
   updateQuestion();
 }
 
-/* format displayed number */
 function formatNum(val, base){
   if(base==2) return val.toString(2);
   if(base==10) return val.toString(10);
   if(base==16) return val.toString(16).toUpperCase();
 }
-
-/* scoring by difficulty */
 function getPoint(){
-  if(level_mode==1) return e_point;
-  if(level_mode==2) return n_point;
-  if(level_mode==3) return h_point;
-  return 1;
+  if(level_mode==1) return 1;
+  if(level_mode==2) return 6;
+  if(level_mode==3) return 15;
 }
-
-/* visual effect */
-function effect(type){
+function effect(t){
   resultBox.classList.remove("effect-correct","effect-wrong");
   void resultBox.offsetWidth;
-  resultBox.classList.add(type==="correct"?"effect-correct":"effect-wrong");
+  resultBox.classList.add(t==="correct"?"effect-correct":"effect-wrong");
 }
 
-/* simple HTML escape for safety */
-function escapeHtml(s){
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-/* event wiring */
 enterBtn.addEventListener("click", enterPush);
 input.addEventListener("keydown", e=>{
-  if(allowNative.checked){
-    if(e.key==="Enter"){ enterPush(); }
-  } else {
-    // native keyboard disabled: prevent typing
-    e.preventDefault();
-  }
+  if(allowNative.checked && e.key==="Enter") enterPush();
+  else if(!allowNative.checked) e.preventDefault();
 });
 modeSelect.addEventListener("change", ()=>{
-  set_mode = parseInt(modeSelect.value);
-  if(set_mode==7){mode=Math.floor(Math.random()*6)+1;}
-  else{mode=set_mode;}
-  x_random();
-  updateQuestion();
+  set_mode=parseInt(modeSelect.value);
+  mode=set_mode==7?Math.floor(Math.random()*6)+1:set_mode;
+  x_random(); updateQuestion();
 });
 levelChk.addEventListener("change", ()=>{
-  level_mode = levelChk.checked ? 2 : 1;
+  level_mode = levelChk.checked?2:1;
   updateQuestion();
 });
-
-/* allowNative toggle: enable/disable native keyboard */
 allowNative.addEventListener('change', ()=>{
-  if(allowNative.checked){
-    input.removeAttribute('readonly');
-    input.focus();
-  }else{
-    input.setAttribute('readonly', 'true');
-    input.blur();
-  }
+  if(allowNative.checked){ input.removeAttribute('readonly'); input.focus();}
+  else{ input.setAttribute('readonly','true'); input.blur();}
 });
 
-/* --- ソフトキーボードの処理 --- */
-const kbd = document.getElementById('softKbd');
-kbd.addEventListener('click', (ev)=>{
-  const keyDiv = ev.target.closest('.key');
-  if(!keyDiv) return;
-  const k = keyDiv.dataset.key;
-  if(k === undefined){
-    // could be Del or Enter handled by id
-    if(keyDiv.id === 'delKey'){ delChar(); }
-    if(keyDiv.id === 'kbdEnter'){ enterPush(); }
+const kbd=document.getElementById('softKbd');
+kbd.addEventListener('click', ev=>{
+  const keyDiv=ev.target.closest('.key'); if(!keyDiv) return;
+  const k=keyDiv.dataset.key;
+  if(k===undefined){
+    if(keyDiv.id==='delKey') delChar();
+    if(keyDiv.id==='kbdEnter') enterPush();
+    if(keyDiv.id==='clearKey') clearInput();
     return;
   }
   insertChar(k);
 });
-document.getElementById('delKey').addEventListener('touchstart', (e)=>{ e.preventDefault(); delChar(); });
-document.getElementById('kbdEnter').addEventListener('touchstart', (e)=>{ e.preventDefault(); enterPush(); });
+document.getElementById('delKey').addEventListener('touchstart', e=>{e.preventDefault();delChar();});
+document.getElementById('kbdEnter').addEventListener('touchstart', e=>{e.preventDefault();enterPush();});
+document.getElementById('clearKey').addEventListener('touchstart', e=>{e.preventDefault();clearInput();});
 
-/* insert character at end (uppercase) */
 function insertChar(ch){
-  // allow A-F only if meaningful, but we just insert uppercase
-  const cur = input.value || "";
-  // limit length to reasonable (e.g., 16 chars)
-  if(cur.length >= 16) return;
-  input.value = (cur + ch.toString().toUpperCase());
-  // show caret (for some browsers)
-  input.scrollLeft = input.scrollWidth;
+  const cur=input.value||"";
+  if(cur.length>=16) return;
+  input.value=cur+ch.toUpperCase();
 }
+function delChar(){ input.value=(input.value||"").slice(0,-1); }
+function clearInput(){ input.value=""; }
 
-/* delete last char */
-function delChar(){
-  input.value = (input.value || "").slice(0, -1);
-}
-
-/* init: ensure input readonly initially */
 input.setAttribute('readonly','true');
-
-/* start */
 updateQuestion();
-
 </script>
 </body>
 </html>
