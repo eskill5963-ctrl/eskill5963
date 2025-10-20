@@ -7,8 +7,8 @@
 <style>
   :root{
     --card-w:360px;
-    --btn-h:48px;
-    --kbd-gap:8px;
+    --btn-h:30px;
+    --kbd-gap:6px;
   }
   body {
     font-family: "Segoe UI", "メイリオ", sans-serif;
@@ -16,7 +16,7 @@
     display: flex;
     justify-content: center;
     align-items: start;
-    padding: 20px;
+    padding: 5px;
     min-height: 100vh;
     transition: background 0.5s;
   }
@@ -73,7 +73,7 @@
   .result {
     border-radius: 6px;
     padding: 10px;
-    margin-top: 10px;
+    margin-top: 5px;
     background: #eee;
     font-size: 13px;
     min-height: 66px;
@@ -86,7 +86,7 @@
 
   /* ソフトキーボード */
   .kbd {
-    margin-top:12px;
+    margin-top:8px;
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: var(--kbd-gap);
@@ -115,7 +115,7 @@
 
   /* 難易度背景カラー（bodyに適用されます） */
   .easy-bg { background: #eaffea; }
-  .normal-bg { background: #fff9d9; }
+  .normal-bg { background: #f0ffff; }
   .hard-bg { background: #ffe6e6; }
 </style>
 </head>
@@ -148,10 +148,11 @@
   <div class="answer-row">
     <input type="text" id="answerInput" placeholder="答えを入力" readonly>
     <button class="primary" id="enterBtn">ENTER</button>
-    <label id="nativeToggle"><input type="checkbox" id="allowNative"> キーボード許可</label>
+
   </div>
 
   <div class="info" id="levelText">難易度: Easy</div>
+      <label id="nativeToggle"><input type="checkbox" id="allowNative"> 標準キーボードの有効化</label>
 
   <div class="result" id="resultBox">まだ回答していません</div>
 
@@ -187,6 +188,7 @@
 
 <script>
 /* --- 既存ロジック（移植済み機能） --- */
+let e_point=1,n_point=6,h_point=15;
 let x, mode, level_mode=1, set_mode=7;
 let score=0, correctRate=0, total=0;
 let old_x=0, old_ans="", old_mode=0, old_intext="";
@@ -331,9 +333,9 @@ function formatNum(val, base){
 
 /* scoring by difficulty */
 function getPoint(){
-  if(level_mode==1) return 1;
-  if(level_mode==2) return 6;
-  if(level_mode==3) return 15;
+  if(level_mode==1) return e_point;
+  if(level_mode==2) return n_point;
+  if(level_mode==3) return h_point;
   return 1;
 }
 
