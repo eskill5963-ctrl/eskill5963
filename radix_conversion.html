@@ -166,7 +166,7 @@
     <label id="nativeToggle"><input type="checkbox" id="allowNative"> KB許可</label>
   </div>
 
-  <div class="info" id="levelText">難易度: Easy</div>
+  <div class="info" id="levelText">難易度: Easy 4bitまで</div>
   <div class="result" id="resultBox">まだ回答していません</div>
 
   <!-- ソフトキーボード -->
@@ -238,16 +238,17 @@ function updateQuestion(){
   if(mode==2||mode==5) qNum.textContent = x.toString(10);
   if(mode==1||mode==3) qNum.textContent = x.toString(2);
   if(mode==4||mode==6) qNum.textContent = x.toString(16).toUpperCase();
-  levelText.textContent = (level_mode==1) ? "難易度: Easy" :
-                          (level_mode==2) ? "難易度: Normal" : "難易度: Hard";
+  levelText.textContent = (level_mode==1) ? "難易度: Easy 4bitまで" :
+                          (level_mode==2) ? "難易度: Normal 7bitまで" : "難易度: Hard 8bit以上";
   document.body.className = level_mode==1?"easy-bg":level_mode==2?"normal-bg":"hard-bg";
 }
-
+  
+/* 出題範囲を設定 */
 function x_random(){
-  if(level_mode==1){x=intRand(2,16);}
-  if(level_mode==1 && (mode==5||mode==6)){x=intRand(10,16);}
-  if(level_mode==2){x=intRand(16,128);}
-  if(level_mode==3){x=intRand(127,1024);}
+  if(level_mode==1){x=intRand(2,15);}
+  if(level_mode==1 && (mode==5||mode==6)){x=intRand(10,15);}
+  if(level_mode==2){x=intRand(16,127);}
+  if(level_mode==3){x=intRand(128,511);}
 }
 function intRand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
@@ -319,8 +320,8 @@ function formatNum(val, base){
 }
 function getPoint(){
   if(level_mode==1) return 1;
-  if(level_mode==2) return 6;
-  if(level_mode==3) return 15;
+  if(level_mode==2) return 8;
+  if(level_mode==3) return 18;
 }
 function effect(t){
   resultBox.classList.remove("effect-correct","effect-wrong");
@@ -376,3 +377,4 @@ updateQuestion();
 </script>
 </body>
 </html>
+
