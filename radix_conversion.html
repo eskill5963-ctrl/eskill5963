@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>基数変換トレーニング（ソフトキー対応・Compact）</title>
+<title>基数変換トレーニング(IbarakiTecHS)</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   :root{
@@ -28,9 +28,7 @@
     padding: 10px;
     text-align: center;
   }
-  #footer {
-    margin-top: 6px;
-  }
+  #footer { margin-top: 6px; }
   h1 {
     font-size: 16px;
     background: #222;
@@ -40,10 +38,7 @@
     margin: 0 0 8px 0;
   }
   .top-row { display:flex; gap:6px; align-items:center; justify-content:space-between; margin-bottom:6px; }
-  .info {
-    font-size: 11px;
-    color: #333;
-  }
+  .info { font-size: 11px; color: #333; }
   select, label { font-size: 12px; }
   .question { margin: 8px 0 2px; font-size: 13px; }
   .number { font-size: 28px; margin: 6px 0; letter-spacing:1px; }
@@ -65,13 +60,6 @@
     border-radius: 6px;
     background: #2b8bd3;
     color: white;
-  }
-  button.secondary {
-    padding: 6px 10px;
-    font-size: 12px;
-    border-radius: 6px;
-    border: 1px solid #bbb;
-    background: #fff;
   }
   .result {
     border-radius: 6px;
@@ -104,33 +92,27 @@
     user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
-  
-  /* A〜Fキーを少し濃い色に */
-  .key[data-key="A"],
-  .key[data-key="B"],
-  .key[data-key="C"],
-  .key[data-key="D"],
-  .key[data-key="E"],
-  .key[data-key="F"] {
-   background: linear-gradient(#e6e6ff, #ccccff);
-   border-color: #9999ff;
-   }
-  
+
+  .key[data-key="A"],.key[data-key="B"],.key[data-key="C"],
+  .key[data-key="D"],.key[data-key="E"],.key[data-key="F"] {
+    background: linear-gradient(#e6e6ff, #ccccff);
+    border-color: #9999ff;
+  }
+
   .key:active { transform: translateY(1px); }
   .key.del { background: linear-gradient(#ffecec,#ffdede); border-color:#f3a3a3; }
   .key.enter { grid-column: span 2; background: linear-gradient(#2b8bd3,#1e6fb2); color:#fff; border-color:#186090; }
-  .key.clear { background: linear-gradient(#fdf5d6,#fdeaa3); border-color:#f0d24b; font-size:14px; }
 
-  /* レスポンシブ調整 */
-  @media (max-width:420px){
-    :root{ --btn-h:46px; }
-    .number{ font-size:24px; }
-    input[type="text"]{ width:120px; font-size:15px; }
+  /* Fullscreenボタン */
+  .key.fullscreen {
+    background: linear-gradient(#d6f5fd,#a6eaff);
+    border-color: #4bc3e0;
+    font-size:14px;
   }
 
   /* 難易度背景カラー */
   .easy-bg { background: #ccffcc; }
-  .normal-bg { background: #c1c1ff; }
+  .normal-bg { background: #95CCFF; }
   .hard-bg { background: #ffa8a8; }
 </style>
 </head>
@@ -166,42 +148,38 @@
     <label id="nativeToggle"><input type="checkbox" id="allowNative"> KB許可</label>
   </div>
 
-  <div class="info" id="levelText">難易度: Easy (4bitまで)</div>
+  <div class="info" id="levelText">難易度: Easy (4bitまで出題 [1点] )</div>
   <div class="result" id="resultBox">まだ回答していません</div>
 
   <!-- ソフトキーボード -->
   <div class="kbd" id="softKbd">
-
     <div class="key" data-key="A">A</div>
     <div class="key" data-key="B">B</div>
     <div class="key" data-key="C">C</div>
     <div class="key del" id="delKey">Del</div>
-
     <div class="key" data-key="7">7</div>
     <div class="key" data-key="8">8</div>
     <div class="key" data-key="9">9</div>
     <div class="key" data-key="D">D</div>
-
     <div class="key" data-key="4">4</div>
     <div class="key" data-key="5">5</div>
     <div class="key" data-key="6">6</div>
     <div class="key" data-key="E">E</div>
-
     <div class="key" data-key="1">1</div>
     <div class="key" data-key="2">2</div>
     <div class="key" data-key="3">3</div>
     <div class="key" data-key="F">F</div>
-
-    <div class="key clear" id="clearKey">Clear</div>
+    <div class="key fullscreen" id="clearKey">Full</div>
     <div class="key" data-key="0">0</div>
     <div class="key wide enter" id="kbdEnter">ENTER</div>
-
   </div>
 
   <div class="info" id="footer">&#169; 2025 Ibaraki Technology High School</div>
 </div>
 
 <script>
+const high_mode_Probability = 10;  //Highモードになる確率 %
+const e_point=1,n_point=8,h_point=18;
 let x, mode, level_mode=1, set_mode=7;
 let score=0, correctRate=0, total=0;
 let old_x=0, old_intext="";
@@ -216,15 +194,17 @@ const levelText = document.getElementById("levelText");
 const modeSelect = document.getElementById("modeSelect");
 const enterBtn = document.getElementById("enterBtn");
 const allowNative = document.getElementById("allowNative");
+const kbd = document.getElementById("softKbd");
+const clearKey = document.getElementById("clearKey");
 
-init();
-
+/* -------------------- 初期化 -------------------- */
 function init(){
   mode = Math.floor(Math.random()*6)+1;
   x_random();
   updateQuestion();
 }
 
+/* -------------------- 問題文を更新 -------------------- */
 function updateQuestion(){
   const questions = [
     "問）次の２進数を１０進数に変換しなさい。",
@@ -238,12 +218,14 @@ function updateQuestion(){
   if(mode==2||mode==5) qNum.textContent = x.toString(10);
   if(mode==1||mode==3) qNum.textContent = x.toString(2);
   if(mode==4||mode==6) qNum.textContent = x.toString(16).toUpperCase();
-  levelText.textContent = (level_mode==1) ? "難易度: Easy (4bitまで)" :
-                          (level_mode==2) ? "難易度: Normal (7bitまで)" : "難易度: Hard (8bit以上)";
+
+  levelText.textContent = (level_mode==1) ? "難易度: Easy (4bitまでを出題 ["+e_point+"点] )" :
+                          (level_mode==2) ? "難易度: Normal (7bitまでを出題 ["+n_point+"点] )" :
+                                            "難易度: Hard (8bit以上を出題 ["+h_point+"点 ])";
   document.body.className = level_mode==1?"easy-bg":level_mode==2?"normal-bg":"hard-bg";
 }
-  
-/* 出題範囲を設定 */
+
+/* -------------------- 出題範囲設定 -------------------- */
 function x_random(){
   if(level_mode==1){x=intRand(2,15);}
   if(level_mode==1 && (mode==5||mode==6)){x=intRand(10,15);}
@@ -252,6 +234,7 @@ function x_random(){
 }
 function intRand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
+/* -------------------- 正解値生成 -------------------- */
 function correctAnswer(){
   switch(mode){
     case 1: return x.toString(10);
@@ -262,12 +245,8 @@ function correctAnswer(){
     case 6: return x.toString(10);
   }
 }
-function baseLabel(n){
-  if(n===2) return "(2進数)";
-  if(n===10) return "(10進数)";
-  if(n===16) return "(16進数)";
-}
 
+/* -------------------- 回答処理 -------------------- */
 function judgeAnswer(){
   const ans = input.value.trim();
   old_x = x;
@@ -286,18 +265,11 @@ function enterPush(){
   const correct = judgeAnswer();
   total++;
   const correctAns = correctAnswer();
-  let fromBase, toBase;
-  switch(mode){
-    case 1: fromBase=2; toBase=10; break;
-    case 2: fromBase=10; toBase=2; break;
-    case 3: fromBase=2; toBase=16; break;
-    case 4: fromBase=16; toBase=2; break;
-    case 5: fromBase=10; toBase=16; break;
-    case 6: fromBase=16; toBase=10; break;
-  }
-  const html = `${baseLabel(fromBase)} ${formatNum(old_x, fromBase)} → ${baseLabel(toBase)} ${correctAns}<br>
-                あなたの解答：<b>${old_intext}</b>`;
-  if(correct){ correctRate++; score+=getPoint(); effect("correct");
+  const html = `正解：${correctAns}<br>あなたの解答：<b>${old_intext}</b>`;
+  if(correct){
+    correctRate++;
+    score+=getPoint();
+    effect("correct");
     resultBox.innerHTML=`<b style="color:green;">○ 正解！</b><br>${html}`;
   } else {
     effect("wrong");
@@ -306,76 +278,103 @@ function enterPush(){
   stats.textContent = `正答率: ${correctRate} / ${total}　スコア: ${Math.floor(score)}`;
   input.value="";
   if(set_mode==7){ mode=Math.floor(Math.random()*6)+1; } else { mode=set_mode; }
+
+  // 難易度抽選（10%でハード）
   if(levelChk.checked){
-    if(Math.random()<0.05){ level_mode=3; } else { level_mode=2; }
-  }else level_mode=1;
+    level_mode = (Math.random()<high_mode_Probability/100)?3:2;
+  } else level_mode=1;
+
   x_random();
   updateQuestion();
 }
 
-function formatNum(val, base){
-  if(base==2) return val.toString(2);
-  if(base==10) return val.toString(10);
-  if(base==16) return val.toString(16).toUpperCase();
-}
 function getPoint(){
-  if(level_mode==1) return 1;
-  if(level_mode==2) return 8;
-  if(level_mode==3) return 18;
+  if(level_mode==1) return e_point;
+  if(level_mode==2) return n_point;
+  if(level_mode==3) return h_point;
 }
+
+/* -------------------- エフェクト -------------------- */
 function effect(t){
   resultBox.classList.remove("effect-correct","effect-wrong");
   void resultBox.offsetWidth;
   resultBox.classList.add(t==="correct"?"effect-correct":"effect-wrong");
 }
 
+/* -------------------- フルスクリーン切替 -------------------- */
+function toggleFullscreen(){
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().then(()=>{
+      clearKey.textContent = "Exit";
+    }).catch(err=>{
+      console.warn("全画面化に失敗しました:", err);
+    });
+  } else {
+    document.exitFullscreen().then(()=>{
+      clearKey.textContent = "Full";
+    });
+  }
+}
+
+/* -------------------- 操作イベント -------------------- */
 enterBtn.addEventListener("click", enterPush);
 input.addEventListener("keydown", e=>{
   if(allowNative.checked && e.key==="Enter") enterPush();
   else if(!allowNative.checked) e.preventDefault();
 });
+
 modeSelect.addEventListener("change", ()=>{
   set_mode=parseInt(modeSelect.value);
   mode=set_mode==7?Math.floor(Math.random()*6)+1:set_mode;
-  x_random(); updateQuestion();
-});
-levelChk.addEventListener("change", ()=>{
-  level_mode = levelChk.checked?2:1;
+  x_random();
   updateQuestion();
 });
-allowNative.addEventListener('change', ()=>{
-  if(allowNative.checked){ input.removeAttribute('readonly'); input.focus();}
-  else{ input.setAttribute('readonly','true'); input.blur();}
+
+levelChk.addEventListener("change", ()=>{
+  level_mode = levelChk.checked ? 2 : 1;
+  x_random();
+  updateQuestion();
 });
 
-const kbd=document.getElementById('softKbd');
+allowNative.addEventListener('change', ()=>{
+  if(allowNative.checked){
+    input.removeAttribute('readonly'); input.focus();
+  } else {
+    input.setAttribute('readonly','true'); input.blur();
+  }
+});
+
+/* -------------------- ソフトキー操作 -------------------- */
 kbd.addEventListener('click', ev=>{
-  const keyDiv=ev.target.closest('.key'); if(!keyDiv) return;
+  const keyDiv=ev.target.closest('.key');
+  if(!keyDiv) return;
   const k=keyDiv.dataset.key;
   if(k===undefined){
     if(keyDiv.id==='delKey') delChar();
     if(keyDiv.id==='kbdEnter') enterPush();
-    if(keyDiv.id==='clearKey') clearInput();
+    if(keyDiv.id==='clearKey') toggleFullscreen();
     return;
   }
   insertChar(k);
 });
-document.getElementById('delKey').addEventListener('touchstart', e=>{e.preventDefault();delChar();});
-document.getElementById('kbdEnter').addEventListener('touchstart', e=>{e.preventDefault();enterPush();});
-document.getElementById('clearKey').addEventListener('touchstart', e=>{e.preventDefault();clearInput();});
+["delKey","kbdEnter","clearKey"].forEach(id=>{
+  document.getElementById(id).addEventListener('touchstart', e=>{
+    e.preventDefault();
+    if(id==='delKey') delChar();
+    if(id==='kbdEnter') enterPush();
+    if(id==='clearKey') toggleFullscreen();
+  });
+});
 
 function insertChar(ch){
-  const cur=input.value||"";
-  if(cur.length>=16) return;
-  input.value=cur+ch.toUpperCase();
+  if(input.value.length>=16) return;
+  input.value += ch.toUpperCase();
 }
-function delChar(){ input.value=(input.value||"").slice(0,-1); }
-function clearInput(){ input.value=""; }
+function delChar(){ input.value = input.value.slice(0,-1); }
 
+/* -------------------- 実行開始 -------------------- */
 input.setAttribute('readonly','true');
-updateQuestion();
+init();
 </script>
 </body>
 </html>
-
-
