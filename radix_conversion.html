@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>基数変換トレーニング(IbarakiTecHS)</title>
+<title>基数変換トレーニング（ソフトキー対応・Compact）</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   :root{
@@ -112,7 +112,7 @@
 
   /* 難易度背景カラー */
   .easy-bg { background: #ccffcc; }
-  .normal-bg { background: #95CCFF; }
+  .normal-bg { background: #80bfff; }
   .hard-bg { background: #ffa8a8; }
 </style>
 </head>
@@ -178,35 +178,29 @@
 </div>
 
 <script>
-const high_mode_Probability = 10;  //Highモードになる確率 %
+const High_mode_Probability = 10;
 const e_point=1,n_point=8,h_point=18;
 let x, mode, level_mode=1, set_mode=7;
 let score=0, correctRate=0, total=0;
 let old_x=0, old_intext="";
 
-const qText = document.getElementById("questionText");
-const qNum = document.getElementById("questionNum");
-const input = document.getElementById("answerInput");
-const resultBox = document.getElementById("resultBox");
-const stats = document.getElementById("stats");
-const levelChk = document.getElementById("levelChk");
-const levelText = document.getElementById("levelText");
-const modeSelect = document.getElementById("modeSelect");
-const enterBtn = document.getElementById("enterBtn");
-const allowNative = document.getElementById("allowNative");
-const kbd = document.getElementById("softKbd");
-const clearKey = document.getElementById("clearKey");
+const qText=document.getElementById("questionText");
+const qNum=document.getElementById("questionNum");
+const input=document.getElementById("answerInput");
+const resultBox=document.getElementById("resultBox");
+const stats=document.getElementById("stats");
+const levelChk=document.getElementById("levelChk");
+const levelText=document.getElementById("levelText");
+const modeSelect=document.getElementById("modeSelect");
+const enterBtn=document.getElementById("enterBtn");
+const allowNative=document.getElementById("allowNative");
+const kbd=document.getElementById("softKbd");
+const clearKey=document.getElementById("clearKey");
 
-/* -------------------- 初期化 -------------------- */
-function init(){
-  mode = Math.floor(Math.random()*6)+1;
-  x_random();
-  updateQuestion();
-}
+function init(){ mode=Math.floor(Math.random()*6)+1; x_random(); updateQuestion(); }
 
-/* -------------------- 問題文を更新 -------------------- */
 function updateQuestion(){
-  const questions = [
+  const q=[
     "問）次の２進数を１０進数に変換しなさい。",
     "問）次の１０進数を２進数に変換しなさい。",
     "問）次の２進数を１６進数に変換しなさい。",
@@ -214,166 +208,163 @@ function updateQuestion(){
     "問）次の１０進数を１６進数に変換しなさい。",
     "問）次の１６進数を１０進数に変換しなさい。"
   ];
-  qText.textContent = questions[mode-1] || "";
-  if(mode==2||mode==5) qNum.textContent = x.toString(10);
-  if(mode==1||mode==3) qNum.textContent = x.toString(2);
-  if(mode==4||mode==6) qNum.textContent = x.toString(16).toUpperCase();
+  qText.textContent=q[mode-1]||"";
+  if(mode==2||mode==5) qNum.textContent=x.toString(10);
+  if(mode==1||mode==3) qNum.textContent=x.toString(2);
+  if(mode==4||mode==6) qNum.textContent=x.toString(16).toUpperCase();
 
-  levelText.textContent = (level_mode==1) ? "難易度: Easy (4bitまでを出題 ["+e_point+"点] )" :
-                          (level_mode==2) ? "難易度: Normal (7bitまでを出題 ["+n_point+"点] )" :
-                                            "難易度: Hard (8bit以上を出題 ["+h_point+"点 ])";
-  document.body.className = level_mode==1?"easy-bg":level_mode==2?"normal-bg":"hard-bg";
+  levelText.textContent=(level_mode==1)?"難易度: Easy (4bitまで ["+e_point+"点])":
+                       (level_mode==2)?"難易度: Normal (7bitまで ["+n_point+"点])":
+                       "難易度: Hard (8bit以上 ["+h_point+"点])";
+  document.body.className=level_mode==1?"easy-bg":level_mode==2?"normal-bg":"hard-bg";
 }
 
-/* -------------------- 出題範囲設定 -------------------- */
 function x_random(){
   if(level_mode==1){x=intRand(2,15);}
-  if(level_mode==1 && (mode==5||mode==6)){x=intRand(10,15);}
+  if(level_mode==1&&(mode==5||mode==6)){x=intRand(10,15);}
   if(level_mode==2){x=intRand(16,127);}
   if(level_mode==3){x=intRand(128,511);}
 }
 function intRand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
-/* -------------------- 正解値生成 -------------------- */
 function correctAnswer(){
   switch(mode){
-    case 1: return x.toString(10);
-    case 2: return x.toString(2);
-    case 3: return x.toString(16).toUpperCase();
-    case 4: return x.toString(2);
-    case 5: return x.toString(16).toUpperCase();
-    case 6: return x.toString(10);
+    case 1:return x.toString(10);
+    case 2:return x.toString(2);
+    case 3:return x.toString(16).toUpperCase();
+    case 4:return x.toString(2);
+    case 5:return x.toString(16).toUpperCase();
+    case 6:return x.toString(10);
   }
 }
 
-/* -------------------- 回答処理 -------------------- */
+function baseLabel(n){
+  if(n===2)return "(2進数)";
+  if(n===10)return "(10進数)";
+  if(n===16)return "(16進数)";
+}
+
 function judgeAnswer(){
-  const ans = input.value.trim();
-  old_x = x;
-  old_intext = ans;
-  let correct = false;
+  const ans=input.value.trim();
+  old_x=x; old_intext=ans;
+  let correct=false;
   try{
-    if(mode==1||mode==6){ correct = (x==parseInt(ans,10)); }
-    if(mode==2||mode==4){ correct = (x==parseInt(ans,2)); }
-    if(mode==3||mode==5){ correct = (x==parseInt(ans,16)); }
-  }catch(e){ correct=false; }
+    if(mode==1||mode==6){correct=(x==parseInt(ans,10));}
+    if(mode==2||mode==4){correct=(x==parseInt(ans,2));}
+    if(mode==3||mode==5){correct=(x==parseInt(ans,16));}
+  }catch(e){correct=false;}
   return correct;
 }
 
 function enterPush(){
-  if(!input.value.trim()) return;
-  const correct = judgeAnswer();
+  if(!input.value.trim())return;
+  const correct=judgeAnswer();
   total++;
-  const correctAns = correctAnswer();
-  const html = `正解：${correctAns}<br>あなたの解答：<b>${old_intext}</b>`;
+  const correctAns=correctAnswer();
+
+  let fromBase,toBase;
+  switch(mode){
+    case 1:fromBase=2;toBase=10;break;
+    case 2:fromBase=10;toBase=2;break;
+    case 3:fromBase=2;toBase=16;break;
+    case 4:fromBase=16;toBase=2;break;
+    case 5:fromBase=10;toBase=16;break;
+    case 6:fromBase=16;toBase=10;break;
+  }
+
+  const detail=`${baseLabel(fromBase)} ${formatNum(old_x,fromBase)} → ${baseLabel(toBase)} ${correctAns}`;
+  const html=`${detail}<br>あなたの解答：<b>${old_intext}</b>`;
+
   if(correct){
-    correctRate++;
-    score+=getPoint();
-    effect("correct");
+    correctRate++; score+=getPoint(); effect("correct");
     resultBox.innerHTML=`<b style="color:green;">○ 正解！</b><br>${html}`;
-  } else {
+  }else{
     effect("wrong");
     resultBox.innerHTML=`<b style="color:red;">× 不正解！</b><br>${html}`;
   }
-  stats.textContent = `正答率: ${correctRate} / ${total}　スコア: ${Math.floor(score)}`;
-  input.value="";
-  if(set_mode==7){ mode=Math.floor(Math.random()*6)+1; } else { mode=set_mode; }
 
-  // 難易度抽選（10%でハード）
+  stats.textContent=`正答率: ${correctRate} / ${total}　スコア: ${Math.floor(score)}`;
+  input.value="";
+  if(set_mode==7){mode=Math.floor(Math.random()*6)+1;}else{mode=set_mode;}
+
   if(levelChk.checked){
-    level_mode = (Math.random()<high_mode_Probability/100)?3:2;
-  } else level_mode=1;
+    level_mode=(Math.random()<High_mode_Probability/100)?3:2;
+  }else level_mode=1;
 
   x_random();
   updateQuestion();
 }
 
-function getPoint(){
-  if(level_mode==1) return e_point;
-  if(level_mode==2) return n_point;
-  if(level_mode==3) return h_point;
+function formatNum(val,base){
+  if(base==2)return val.toString(2);
+  if(base==10)return val.toString(10);
+  if(base==16)return val.toString(16).toUpperCase();
 }
 
-/* -------------------- エフェクト -------------------- */
+function getPoint(){
+  if(level_mode==1)return e_point;
+  if(level_mode==2)return n_point;
+  if(level_mode==3)return h_point;
+}
+
 function effect(t){
   resultBox.classList.remove("effect-correct","effect-wrong");
   void resultBox.offsetWidth;
   resultBox.classList.add(t==="correct"?"effect-correct":"effect-wrong");
 }
 
-/* -------------------- フルスクリーン切替 -------------------- */
 function toggleFullscreen(){
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().then(()=>{
-      clearKey.textContent = "Exit";
-    }).catch(err=>{
-      console.warn("全画面化に失敗しました:", err);
-    });
-  } else {
-    document.exitFullscreen().then(()=>{
-      clearKey.textContent = "Full";
-    });
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen().then(()=>{clearKey.textContent="Exit";});
+  }else{
+    document.exitFullscreen().then(()=>{clearKey.textContent="Full";});
   }
 }
 
-/* -------------------- 操作イベント -------------------- */
-enterBtn.addEventListener("click", enterPush);
-input.addEventListener("keydown", e=>{
-  if(allowNative.checked && e.key==="Enter") enterPush();
-  else if(!allowNative.checked) e.preventDefault();
+enterBtn.addEventListener("click",enterPush);
+input.addEventListener("keydown",e=>{
+  if(allowNative.checked&&e.key==="Enter")enterPush();
+  else if(!allowNative.checked)e.preventDefault();
 });
 
-modeSelect.addEventListener("change", ()=>{
+modeSelect.addEventListener("change",()=>{
   set_mode=parseInt(modeSelect.value);
   mode=set_mode==7?Math.floor(Math.random()*6)+1:set_mode;
-  x_random();
-  updateQuestion();
+  x_random(); updateQuestion();
+});
+levelChk.addEventListener("change",()=>{
+  level_mode=levelChk.checked?2:1;
+  x_random(); updateQuestion();
+});
+allowNative.addEventListener("change",()=>{
+  if(allowNative.checked){input.removeAttribute("readonly");input.focus();}
+  else{input.setAttribute("readonly","true");input.blur();}
 });
 
-levelChk.addEventListener("change", ()=>{
-  level_mode = levelChk.checked ? 2 : 1;
-  x_random();
-  updateQuestion();
-});
-
-allowNative.addEventListener('change', ()=>{
-  if(allowNative.checked){
-    input.removeAttribute('readonly'); input.focus();
-  } else {
-    input.setAttribute('readonly','true'); input.blur();
-  }
-});
-
-/* -------------------- ソフトキー操作 -------------------- */
-kbd.addEventListener('click', ev=>{
-  const keyDiv=ev.target.closest('.key');
-  if(!keyDiv) return;
+kbd.addEventListener("click",ev=>{
+  const keyDiv=ev.target.closest(".key"); if(!keyDiv)return;
   const k=keyDiv.dataset.key;
   if(k===undefined){
-    if(keyDiv.id==='delKey') delChar();
-    if(keyDiv.id==='kbdEnter') enterPush();
-    if(keyDiv.id==='clearKey') toggleFullscreen();
+    if(keyDiv.id==='delKey')delChar();
+    if(keyDiv.id==='kbdEnter')enterPush();
+    if(keyDiv.id==='clearKey')toggleFullscreen();
     return;
   }
   insertChar(k);
 });
 ["delKey","kbdEnter","clearKey"].forEach(id=>{
-  document.getElementById(id).addEventListener('touchstart', e=>{
+  document.getElementById(id).addEventListener("touchstart",e=>{
     e.preventDefault();
-    if(id==='delKey') delChar();
-    if(id==='kbdEnter') enterPush();
-    if(id==='clearKey') toggleFullscreen();
+    if(id==='delKey')delChar();
+    if(id==='kbdEnter')enterPush();
+    if(id==='clearKey')toggleFullscreen();
   });
 });
 
-function insertChar(ch){
-  if(input.value.length>=16) return;
-  input.value += ch.toUpperCase();
-}
-function delChar(){ input.value = input.value.slice(0,-1); }
+function insertChar(ch){if(input.value.length>=16)return;input.value+=ch.toUpperCase();}
+function delChar(){input.value=input.value.slice(0,-1);}
 
-/* -------------------- 実行開始 -------------------- */
-input.setAttribute('readonly','true');
+input.setAttribute("readonly","true");
 init();
 </script>
 </body>
