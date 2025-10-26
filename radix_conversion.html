@@ -91,14 +91,19 @@
     display:flex; align-items:center; justify-content:center;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
   }
-
+  .key.disabled {
+    background: #eee;
+    border-color: #ccc;
+    color: #aaa;
+    pointer-events: none;
+  }
   .key[data-key="A"],.key[data-key="B"],.key[data-key="C"],
   .key[data-key="D"],.key[data-key="E"],.key[data-key="F"] {
     background: linear-gradient(#e6e6ff, #ccccff);
     border-color: #9999ff;
   }
-
   .key:active { transform: translateY(1px); }
   .key.del { background: linear-gradient(#ffecec,#ffdede); border-color:#f3a3a3; }
   .key.enter { grid-column: span 2; background: linear-gradient(#2b8bd3,#1e6fb2); color:#fff; border-color:#186090; }
@@ -169,8 +174,8 @@
     <div class="key" data-key="2">2</div>
     <div class="key" data-key="3">3</div>
     <div class="key" data-key="F">F</div>
-    <div class="key fullscreen" id="clearKey">Full</div>
     <div class="key" data-key="0">0</div>
+    <div class="key fullscreen" id="clearKey">Full</div>
     <div class="key wide enter" id="kbdEnter">ENTER</div>
   </div>
 
@@ -196,8 +201,9 @@ const enterBtn=document.getElementById("enterBtn");
 const allowNative=document.getElementById("allowNative");
 const kbd=document.getElementById("softKbd");
 const clearKey=document.getElementById("clearKey");
+const allKeys=document.querySelectorAll(".kbd .key[data-key]");
 
-function init(){ mode=Math.floor(Math.random()*6)+1; x_random(); updateQuestion(); }
+function init(){ mode=Math.floor(Math.random()*6)+1; x_random(); updateQuestion(); updateKeys(); }
 
 function updateQuestion(){
   const q=[
@@ -217,6 +223,8 @@ function updateQuestion(){
                        (level_mode==2)?"難易度: Normal (7bitまでの数を出題 ["+n_point+"点])":
                        "難易度: Hard (8bit以上の数を出題 ["+h_point+"点])";
   document.body.className=level_mode==1?"easy-bg":level_mode==2?"normal-bg":"hard-bg";
+
+  updateKeys(); // キー状態更新
 }
 
 function x_random(){
@@ -321,6 +329,45 @@ function toggleFullscreen(){
   }
 }
 
+// キー挿入判定
+function insertChar(ch){
+  if(input.value.length>=16) return;
+  const allowed=getAllowedChars();
+  if(!allowed.includes(ch.toUpperCase())) return;
+  input.value+=ch.toUpperCase();
+}
+
+// モードごとに許可文字を返す
+function getAllowedChars(){
+  let inputBase;
+  switch(mode){
+    case 1: // 2→10
+    case 6: //16→10
+      inputBase = 10; break;
+    case 2: //10→2
+    case 4: //16→2
+      inputBase = 2; break;
+    case 3: //2→16
+    case 5: //10→16
+      inputBase = 16; break;
+    default:
+      inputBase = 10;
+  }
+  if(inputBase===2) return ["0","1"];
+  if(inputBase===10) return ["0","1","2","3","4","5","6","7","8","9"];
+  if(inputBase===16) return ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"];
+}
+
+
+// キーの有効/無効更新
+function updateKeys(){
+  const allowed=getAllowedChars();
+  allKeys.forEach(k=>{
+    if(allowed.includes(k.dataset.key)) k.classList.remove("disabled");
+    else k.classList.add("disabled");
+  });
+}
+
 enterBtn.addEventListener("click",enterPush);
 input.addEventListener("keydown",e=>{
   if(allowNative.checked&&e.key==="Enter")enterPush();
@@ -361,7 +408,6 @@ kbd.addEventListener("click",ev=>{
   });
 });
 
-function insertChar(ch){if(input.value.length>=16)return;input.value+=ch.toUpperCase();}
 function delChar(){input.value=input.value.slice(0,-1);}
 
 input.setAttribute("readonly","true");
