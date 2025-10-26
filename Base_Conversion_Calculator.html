@@ -2,31 +2,33 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>基数変換電卓（小数完全対応・入力制限付）</title>
+<title>基数変換電卓（小数対応）</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-  :root{--card-w:360px;--btn-h:36px;--kbd-gap:4px;}
-  body{font-family:"Segoe UI","メイリオ",sans-serif;background:#f2f2f2;display:flex;justify-content:center;align-items:start;padding:14px;min-height:100vh;}
-  #game{width:min(var(--card-w),96vw);background:#fff;border-radius:10px;box-shadow:0 0 8px rgba(0,0,0,0.15);padding:10px;text-align:center;}
-  h1{font-size:16px;background:#222;color:#fff;padding:6px;border-radius:6px;margin:0 0 8px 0;}
-  .top-row{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-bottom:6px;}
-  .info{font-size:11px;color:#333;}
-  select,label{font-size:12px;}
-  .question{margin:8px 0 2px;font-size:13px;}
-  .number{font-size:26px;margin:6px 0;letter-spacing:1px;}
-  .answer-row{display:flex;justify-content:center;gap:6px;align-items:center;margin-top:3px;}
-  input[type="text"]{width:130px;padding:6px 8px;text-align:center;font-size:14px;border-radius:5px;border:1px solid #ccc;}
-  #nativeToggle{font-size:11px;margin-left:4px;vertical-align:middle;}
-  button.primary{padding:6px 10px;font-size:13px;border:none;border-radius:6px;background:#2b8bd3;color:white;}
-  .result{border-radius:6px;padding:8px;margin-top:8px;background:#eee;font-size:12px;min-height:56px;text-align:left;line-height:1.6;}
-  .kbd{margin-top:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:var(--kbd-gap);}
-  .key{height:var(--btn-h);border-radius:6px;font-size:16px;border:1px solid #cfcfcf;background:linear-gradient(#fff,#f6f6f6);display:flex;align-items:center;justify-content:center;user-select:none;}
-  .key[data-key="A"],.key[data-key="B"],.key[data-key="C"],.key[data-key="D"],.key[data-key="E"],.key[data-key="F"]{background:linear-gradient(#e6e6ff,#ccccff);border-color:#9999ff;}
-  .key:active{transform:translateY(1px);}
-  .key.del{background:linear-gradient(#ffecec,#ffdede);border-color:#f3a3a3;}
-  .key.enter{grid-column:span 2;background:linear-gradient(#2b8bd3,#1e6fb2);color:#fff;border-color:#186090;}
-  .key.point{background:linear-gradient(#d6f5fd,#a6eaff);border-color:#4bc3e0;font-size:18px;}
-  .key.disabled{opacity:0.35;pointer-events:none;filter:grayscale(0.8);}
+:root{--card-w:360px;--btn-h:48px;--kbd-gap:4px;}
+body{font-family:"Segoe UI","メイリオ",sans-serif;background:#f2f2f2;display:flex;justify-content:center;align-items:start;padding:14px;min-height:100vh;}
+#game{width:min(var(--card-w),96vw);background:#fff;border-radius:10px;box-shadow:0 0 8px rgba(0,0,0,0.15);padding:10px;text-align:center;}
+h1{font-size:16px;background:#222;color:#fff;padding:6px;border-radius:6px;margin:0 0 8px 0;}
+.top-row{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;}
+.info{font-size:11px;color:#333;}
+.radio-group{display:flex;gap:4px;}
+.radio-group input[type="radio"]{display:none;}
+.radio-group label{padding:4px 8px;border-radius:6px;border:1px solid #ccc;background:#e6e6e6;cursor:pointer;font-size:12px;user-select:none;}
+.radio-group input[type="radio"]:checked + label{background:#2b8bd3;color:#fff;border-color:#186090;}
+.question{margin:8px 0 2px;font-size:13px;}
+.answer-row{display:flex;justify-content:center;gap:6px;align-items:center;margin-top:3px;}
+input[type="text"]{width:130px;padding:6px 8px;text-align:center;font-size:14px;border-radius:5px;border:1px solid #ccc;}
+#nativeToggle{font-size:11px;margin-left:4px;vertical-align:middle;}
+button.primary{padding:6px 10px;font-size:13px;border:none;border-radius:6px;background:#2b8bd3;color:white;cursor:pointer;}
+.result{border-radius:6px;padding:8px;margin-top:18px;background:#eee;font-size:18px;min-height:100px;text-align:left;line-height:1.6;}
+.kbd{margin-top:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:var(--kbd-gap);}
+.key{height:var(--btn-h);border-radius:6px;font-size:16px;border:1px solid #cfcfcf;background:linear-gradient(#fff,#f6f6f6);display:flex;align-items:center;justify-content:center;user-select:none;cursor:pointer;}
+.key[data-key="A"],.key[data-key="B"],.key[data-key="C"],.key[data-key="D"],.key[data-key="E"],.key[data-key="F"]{background:linear-gradient(#e6e6ff,#ccccff);border-color:#9999ff;}
+.key:active{transform:translateY(1px);}
+.key.del{background:linear-gradient(#ffecec,#ffdede);border-color:#f3a3a3;}
+.key.enter{grid-column:span 2;background:linear-gradient(#2b8bd3,#1e6fb2);color:#fff;border-color:#186090;}
+.key.point{background:linear-gradient(#d6f5fd,#a6eaff);border-color:#4bc3e0;font-size:18px;}
+.key.disabled{opacity:0.35;pointer-events:none;filter:grayscale(0.8);}
 </style>
 </head>
 <body>
@@ -35,18 +37,17 @@
   <h1>基数変換電卓</h1>
 
   <div class="top-row">
-    <div class="info">　　入力する基数（進数）を選んでください→</div>
-    <div>
-      <select id="baseSelect" title="入力基数">
-        <option value="2">　2進数入力</option>
-        <option value="10" selected>　10進数入力</option>
-        <option value="16">　16進数入力</option>
-      </select>
+    <div class="info">入力基数を選んでください</div>
+    <div class="radio-group">
+      <input type="radio" id="rad2" name="baseRadio" value="2"><label for="rad2">2進数</label>
+      <input type="radio" id="rad10" name="baseRadio" value="10" checked><label for="rad10">10進数</label>
+      <input type="radio" id="rad16" name="baseRadio" value="16"><label for="rad16">16進数</label>
     </div>
   </div>
 
   <div class="question" id="questionText">入力した数値をすべての基数で表示します。</div>
-  <div class="number" id="questionNum">---</div>
+
+  <div class="result" id="resultBox">ここに結果が表示されます。</div>
 
   <div class="answer-row">
     <input type="text" id="answerInput" placeholder="入力" readonly>
@@ -54,7 +55,6 @@
     <label id="nativeToggle"><input type="checkbox" id="allowNative"> KB許可</label>
   </div>
 
-  <div class="result" id="resultBox">ここに2進数・10進数・16進数の結果が表示されます。</div>
 
   <div class="kbd" id="softKbd">
     <div class="key" data-key="A">A</div>
@@ -84,12 +84,10 @@
 <script>
 const input = document.getElementById("answerInput");
 const resultBox = document.getElementById("resultBox");
-const baseSelect = document.getElementById("baseSelect");
 const enterBtn = document.getElementById("enterBtn");
 const allowNative = document.getElementById("allowNative");
 const kbd = document.getElementById("softKbd");
 const pointKey = document.getElementById("pointKey");
-const qNum = document.getElementById("questionNum");
 
 // 小数部分を任意進数から10進に変換
 function baseFracToDec(fracStr, base){
@@ -115,27 +113,34 @@ function decToBaseFrac(num, base, precision=12){
   return res;
 }
 
+// 現在選択中の基数を取得
+function getBase(){
+  const radios = document.getElementsByName("baseRadio");
+  for(const r of radios){
+    if(r.checked) return parseInt(r.value);
+  }
+  return 10;
+}
+
 // 計算・表示
 function enterPush(){
   const val = input.value.trim();
   if(!val){resultBox.textContent="値を入力してください。"; return;}
-  const base = parseInt(baseSelect.value);
+  const base = getBase();
   try{
     let [intPart, fracPart] = val.split(".");
     let intNum = parseInt(intPart || "0", base);
     let fracDec = fracPart ? baseFracToDec(fracPart, base) : 0;
     let dec = intNum + fracDec;
 
-    // 整数・小数を各進数に変換
     let bin = Math.floor(dec).toString(2);
     let hex = Math.floor(dec).toString(16).toUpperCase();
     if(fracDec>0){
       bin += "." + decToBaseFrac(fracDec,2);
       hex += "." + decToBaseFrac(fracDec,16);
-      dec = dec.toString(); // 10進は普通に表示
+      dec = dec.toString();
     }
 
-    qNum.textContent = `${val} (${base}進)を変換`;
     resultBox.innerHTML =
       `<b>2進数:</b> ${bin}<br>`+
       `<b>10進数:</b> ${dec}<br>`+
@@ -178,7 +183,7 @@ function delChar(){ input.value=input.value.slice(0,-1); }
 
 // 入力基数に応じて有効キー制御
 function updateKeyAvailability(){
-  const base = parseInt(baseSelect.value);
+  const base = getBase();
   const keys = document.querySelectorAll(".key[data-key]");
   keys.forEach(k=>{
     const val = k.dataset.key;
@@ -192,7 +197,8 @@ function updateKeyAvailability(){
   pointKey.classList.remove("disabled"); // 小数点は全基数対応
 }
 
-baseSelect.addEventListener("change", updateKeyAvailability);
+const radios = document.getElementsByName("baseRadio");
+radios.forEach(r => r.addEventListener("change", updateKeyAvailability));
 updateKeyAvailability();
 input.setAttribute("readonly","true");
 </script>
