@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>基数変換電卓（小数完全対応・入力制限付）</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root{--card-w:360px;--btn-h:36px;--kbd-gap:4px;}
+  body{font-family:"Segoe UI","メイリオ",sans-serif;background:#f2f2f2;display:flex;justify-content:center;align-items:start;padding:14px;min-height:100vh;}
+  #game{width:min(var(--card-w),96vw);background:#fff;border-radius:10px;box-shadow:0 0 8px rgba(0,0,0,0.15);padding:10px;text-align:center;}
+  h1{font-size:16px;background:#222;color:#fff;padding:6px;border-radius:6px;margin:0 0 8px 0;}
+  .top-row{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .info{font-size:11px;color:#333;}
+  select,label{font-size:12px;}
+  .question{margin:8px 0 2px;font-size:13px;}
+  .number{font-size:26px;margin:6px 0;letter-spacing:1px;}
+  .answer-row{display:flex;justify-content:center;gap:6px;align-items:center;margin-top:3px;}
+  input[type="text"]{width:130px;padding:6px 8px;text-align:center;font-size:14px;border-radius:5px;border:1px solid #ccc;}
+  #nativeToggle{font-size:11px;margin-left:4px;vertical-align:middle;}
+  button.primary{padding:6px 10px;font-size:13px;border:none;border-radius:6px;background:#2b8bd3;color:white;}
+  .result{border-radius:6px;padding:8px;margin-top:8px;background:#eee;font-size:12px;min-height:56px;text-align:left;line-height:1.6;}
+  .kbd{margin-top:8px;display:grid;grid-template-columns:repeat(4,1fr);gap:var(--kbd-gap);}
+  .key{height:var(--btn-h);border-radius:6px;font-size:16px;border:1px solid #cfcfcf;background:linear-gradient(#fff,#f6f6f6);display:flex;align-items:center;justify-content:center;user-select:none;}
+  .key[data-key="A"],.key[data-key="B"],.key[data-key="C"],.key[data-key="D"],.key[data-key="E"],.key[data-key="F"]{background:linear-gradient(#e6e6ff,#ccccff);border-color:#9999ff;}
+  .key:active{transform:translateY(1px);}
+  .key.del{background:linear-gradient(#ffecec,#ffdede);border-color:#f3a3a3;}
+  .key.enter{grid-column:span 2;background:linear-gradient(#2b8bd3,#1e6fb2);color:#fff;border-color:#186090;}
+  .key.point{background:linear-gradient(#d6f5fd,#a6eaff);border-color:#4bc3e0;font-size:18px;}
+  .key.disabled{opacity:0.35;pointer-events:none;filter:grayscale(0.8);}
+</style>
+</head>
+<body>
+
+<div id="game">
+  <h1>基数変換電卓</h1>
+
+  <div class="top-row">
+    <div class="info">　　入力する基数（進数）を選んでください→</div>
+    <div>
+      <select id="baseSelect" title="入力基数">
+        <option value="2">　2進数入力</option>
+        <option value="10" selected>　10進数入力</option>
+        <option value="16">　16進数入力</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="question" id="questionText">入力した数値をすべての基数で表示します。</div>
+  <div class="number" id="questionNum">---</div>
+
+  <div class="answer-row">
+    <input type="text" id="answerInput" placeholder="入力" readonly>
+    <button class="primary" id="enterBtn">ENTER</button>
+    <label id="nativeToggle"><input type="checkbox" id="allowNative"> KB許可</label>
+  </div>
+
+  <div class="result" id="resultBox">ここに2進数・10進数・16進数の結果が表示されます。</div>
+
+  <div class="kbd" id="softKbd">
+    <div class="key" data-key="A">A</div>
+    <div class="key" data-key="B">B</div>
+    <div class="key" data-key="C">C</div>
+    <div class="key del" id="delKey">Del</div>
+    <div class="key" data-key="7">7</div>
+    <div class="key" data-key="8">8</div>
+    <div class="key" data-key="9">9</div>
+    <div class="key" data-key="D">D</div>
+    <div class="key" data-key="4">4</div>
+    <div class="key" data-key="5">5</div>
+    <div class="key" data-key="6">6</div>
+    <div class="key" data-key="E">E</div>
+    <div class="key" data-key="1">1</div>
+    <div class="key" data-key="2">2</div>
+    <div class="key" data-key="3">3</div>
+    <div class="key" data-key="F">F</div>
+    <div class="key" data-key="0">0</div>
+    <div class="key point" id="pointKey">.</div>
+    <div class="key wide enter" id="kbdEnter">ENTER</div>
+  </div>
+
+  <div class="info">&#169; 2025 Ibaraki Technology High School</div>
+</div>
+
+<script>
+const input = document.getElementById("answerInput");
+const resultBox = document.getElementById("resultBox");
+const baseSelect = document.getElementById("baseSelect");
+const enterBtn = document.getElementById("enterBtn");
+const allowNative = document.getElementById("allowNative");
+const kbd = document.getElementById("softKbd");
+const pointKey = document.getElementById("pointKey");
+const qNum = document.getElementById("questionNum");
+
+// 小数部分を任意進数から10進に変換
+function baseFracToDec(fracStr, base){
+  let sum = 0;
+  for(let i=0; i<fracStr.length; i++){
+    let digit = parseInt(fracStr[i], base);
+    if(isNaN(digit)) throw Error("invalid");
+    sum += digit / Math.pow(base, i+1);
+  }
+  return sum;
+}
+
+// 任意進数の小数を指定精度で変換
+function decToBaseFrac(num, base, precision=12){
+  let res = "";
+  let f = num;
+  for(let i=0; i<precision && f>1e-12; i++){
+    f *= base;
+    let d = Math.floor(f);
+    res += (base===16 && d>=10) ? "ABCDEF"[d-10] : d.toString();
+    f -= d;
+  }
+  return res;
+}
+
+// 計算・表示
+function enterPush(){
+  const val = input.value.trim();
+  if(!val){resultBox.textContent="値を入力してください。"; return;}
+  const base = parseInt(baseSelect.value);
+  try{
+    let [intPart, fracPart] = val.split(".");
+    let intNum = parseInt(intPart || "0", base);
+    let fracDec = fracPart ? baseFracToDec(fracPart, base) : 0;
+    let dec = intNum + fracDec;
+
+    // 整数・小数を各進数に変換
+    let bin = Math.floor(dec).toString(2);
+    let hex = Math.floor(dec).toString(16).toUpperCase();
+    if(fracDec>0){
+      bin += "." + decToBaseFrac(fracDec,2);
+      hex += "." + decToBaseFrac(fracDec,16);
+      dec = dec.toString(); // 10進は普通に表示
+    }
+
+    qNum.textContent = `${val} (${base}進)を変換`;
+    resultBox.innerHTML =
+      `<b>2進数:</b> ${bin}<br>`+
+      `<b>10進数:</b> ${dec}<br>`+
+      `<b>16進数:</b> ${hex}`;
+    input.value = "";
+  }catch(e){
+    resultBox.innerHTML=`<span style="color:red;">入力エラー：${val}</span>`;
+  }
+}
+
+// クリック・物理キー
+enterBtn.addEventListener("click", enterPush);
+input.addEventListener("keydown", e=>{
+  if(e.key==="Enter") enterPush();
+  else if(!allowNative.checked) e.preventDefault();
+});
+
+// ネイティブKB切替
+allowNative.addEventListener("change", ()=>{
+  if(allowNative.checked){input.removeAttribute("readonly"); input.focus();}
+  else{input.setAttribute("readonly","true"); input.blur();}
+});
+
+// ソフトキー処理
+kbd.addEventListener("click", ev=>{
+  const keyDiv = ev.target.closest(".key"); if(!keyDiv) return;
+  const k = keyDiv.dataset.key;
+  if(k===undefined){
+    if(keyDiv.id==='delKey') delChar();
+    if(keyDiv.id==='kbdEnter') enterPush();
+    if(keyDiv.id==='pointKey') insertChar('.');
+    return;
+  }
+  if(keyDiv.classList.contains("disabled")) return;
+  insertChar(k);
+});
+
+function insertChar(ch){ if(input.value.length>=16) return; input.value+=ch.toUpperCase(); }
+function delChar(){ input.value=input.value.slice(0,-1); }
+
+// 入力基数に応じて有効キー制御
+function updateKeyAvailability(){
+  const base = parseInt(baseSelect.value);
+  const keys = document.querySelectorAll(".key[data-key]");
+  keys.forEach(k=>{
+    const val = k.dataset.key;
+    let enable = false;
+    if(base===2){ enable = ["0","1"].includes(val); }
+    else if(base===10){ enable = /^[0-9]$/.test(val); }
+    else if(base===16){ enable = /^[0-9A-F]$/.test(val); }
+    if(enable){ k.classList.remove("disabled"); }
+    else{ k.classList.add("disabled"); }
+  });
+  pointKey.classList.remove("disabled"); // 小数点は全基数対応
+}
+
+baseSelect.addEventListener("change", updateKeyAvailability);
+updateKeyAvailability();
+input.setAttribute("readonly","true");
+</script>
+</body>
+</html>
