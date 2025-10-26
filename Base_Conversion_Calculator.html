@@ -140,6 +140,7 @@ function enterPush(){
       hex += "." + decToBaseFrac(fracDec,16);
       dec = dec.toString();
     }
+    bin = formatBinary(bin);  // 下位桁から4桁区切り
 
     resultBox.innerHTML =
       `<b>2進数:</b> ${bin}<br>`+
@@ -196,6 +197,27 @@ function updateKeyAvailability(){
   });
   pointKey.classList.remove("disabled"); // 小数点は全基数対応
 }
+
+// 2進数を4桁ごとに区切る
+function formatBinary(binStr){
+  if(!binStr.includes(".")) return binStr.replace(/(\d)(?=(\d{4})+$)/g,"$1 "); 
+  const [intPart, fracPart] = binStr.split(".");
+  
+  // 整数部分（下位桁から4桁区切り）
+  let intReversed = intPart.split("").reverse().join("");
+  intReversed = intReversed.replace(/(\d{4})(?=\d)/g,"$1 ");
+  const intFmt = intReversed.split("").reverse().join("");
+  
+  // 小数部分（上位桁から4桁区切り）
+  let fracFmt = "";
+  for(let i=0; i<fracPart.length; i+=4){
+    fracFmt += fracPart.substr(i,4) + " ";
+  }
+  fracFmt = fracFmt.trim();
+  
+  return intFmt + "." + fracFmt;
+}
+
 
 const radios = document.getElementsByName("baseRadio");
 radios.forEach(r => r.addEventListener("change", updateKeyAvailability));
