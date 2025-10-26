@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>BLE PWM Controller</title>
+<style>
+  body { font-family: sans-serif; text-align: center; }
+  h1 { margin-bottom: 0; }
+  #dashboard {
+    font-size: 2em;
+    margin: 20px 0;
+    padding: 15px;
+    border: 2px solid #333;
+    display: inline-block;
+    border-radius: 10px;
+    background: #f0f0f0;
+  }
+  .small-text { font-size: 0.6em; color: #555; }
+  .control { margin: 12px 0; }
+  button { margin: 4px; font-size: 1em; }
+  .logbox {
+    text-align: left;
+    border: 1px solid #aaa;
+    padding: 10px;
+    max-width: 400px;
+    margin: 10px auto;
+    background: #fff;
+    height: 8em;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  .log-title { font-weight: bold; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h1>BLE PWM コントローラ</h1>
+<h3>茨木工科高等学校 電気系 Iot研究班</h3>
+
+<div id="dashboard">周波数: 25 Hz (1500 rpm), Duty: 0 %<br>
+  <span class="small-text">周期: 40.00 ms, ON: 0.00 ms, OFF: 40.00 ms</span>
+</div>
+
+<div>
+  <button id="connect">接続</button>
+  <button id="disconnect" style="background:#ccc;">切断</button>
+  <button id="send">送信</button>
+  <button id="stop" style="background:#f88;">STOP</button>
+</div>
+
+<div class="control">
+  周波数: <input id="freq" type="number" value="25"> Hz
+  <button id="freqUp">＋</button>
+  <button id="freqDown">－</button>
+</div>
+
+<div class="control">
+  Duty: <input id="duty" type="number" value="0"> %
+  <button id="dutyUp">＋</button>
+  <button id="dutyDown">－</button>
+</div>
+
+<div class="log-title">操作送信ログ (TX)</div>
+<pre id="logTx" class="logbox"></pre>
+
+<div class="log-title">D9端子センサー計測用ログ (RX)</div>
+<pre id="logRx" class="logbox"></pre>
+
+<script>
+let bleDevice, uartService, txChar, rxChar;
+let rxBuffer = "";
+
+const UART_SERVICE_UUID = "6e400001-b5a3-f393-e0a9-e50e24dcca9e";
+const UART_TX_CHAR_UUID = "6e400002-b5a3-f393-e0a9-e50e24dcca9e";
+const UART_RX_CHAR_UUID = "6e400003-b5a3-f393-e0a9-e50e24dcca9e";
+
+const INIT_FREQ = 25;
+const INIT_DUTY = 0;
+
+function logTx(msg) {
+  const logBox = document.getElementById("logTx");
+  logBox.textContent += msg + "\n";
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+function logRx(msg) {
+  const logBox = document.getElementById("logRx");
+  logBox.textContent += msg + "\n";
+  logBox.scrollTop = logBox.scrollHeight;
+}
+
+function updateStatus() {
+  let freq = parseFloat(document.getElementById("freq").value) || 0;
+  let duty = parseInt(document.getElementById("duty").value) || 0;
+  const rpm = Math.round(freq * 60);
+
+  let period = 0, onTime = 0, offTime = 0;
+  if (freq > 0) {
+    period = 1000 / freq;
+    onTime = period * (duty / 100);
+    offTime = period - onTime;
+  }
+
+  document.getElementById("dashboard").innerHTML =
+    `周波数: ${freq} Hz (${rpm} rpm), Duty: ${duty} %<br>` +
+    `<span class="small-text">周期: ${period.toFixed(2)} ms, ` +
+    `ON: ${onTime.toFixed(2)} ms, OFF: ${offTime.toFixed(2)} ms</span>`;
+}
+
+async function sendValues() {
+  if (!txChar) { logTx("未接続です"); return; }
+
+  let freq = parseFloat(document.getElementById("freq").value);
+  let duty = parseInt(document.getElementById("duty").value);
+
+  // バリデーション
+  if (isNaN(freq) || freq < 10) freq = 10;
+  if (isNaN(duty) || duty < 0) duty = 0;
+  if (duty > 100) duty = 100;
+
+  document.getElementById("freq").value = freq;
+  document.getElementById("duty").value = duty;
+
+  const text = `freq=${freq} duty=${duty}\n`;
+
+  try {
+    await txChar.writeValue(new TextEncoder().encode(text));
+    logTx("TX: " + text.trim());
+  } catch(e) {
+    logTx("送信エラー: " + e);
+  }
+
+  updateStatus();
+}
+
+function setControlsEnabled(enabled) {
+  ["send","stop","freqUp","freqDown","dutyUp","dutyDown","freq","duty"].forEach(id => {
+    document.getElementById(id).disabled = !enabled;
+  });
+}
+
+// --- 接続処理 ---
+document.getElementById("connect").onclick = async () => {
+  if (!navigator.bluetooth) {
+    logTx("このブラウザはWeb Bluetoothをサポートしていません。\niPhoneの場合はBluefyなどをご利用ください。");
+    return;
+  }
+
+  try {
+    logTx("デバイス検索中...");
+    bleDevice = await navigator.bluetooth.requestDevice({
+      filters: [{ services: [UART_SERVICE_UUID] }]
+    });
+
+    const server = await bleDevice.gatt.connect();
+    uartService = await server.getPrimaryService(UART_SERVICE_UUID);
+
+    txChar = await uartService.getCharacteristic(UART_TX_CHAR_UUID);
+    rxChar = await uartService.getCharacteristic(UART_RX_CHAR_UUID);
+
+    await rxChar.startNotifications();
+    rxChar.addEventListener("characteristicvaluechanged", (event) => {
+      const val = new TextDecoder().decode(event.target.value);
+      rxBuffer += val;
+      let lines = rxBuffer.split("\n");
+      rxBuffer = lines.pop();
+      lines.forEach(line => {
+        line = line.trim();
+        if(line) logRx(`${new Date().toLocaleTimeString()} RX: ${line}`);
+      });
+    });
+
+    logTx("接続完了");
+    setControlsEnabled(true);
+
+  } catch (error) {
+    logTx("接続エラー: " + error);
+  }
+};
+
+document.getElementById("disconnect").onclick = async () => {
+  if (bleDevice && bleDevice.gatt.connected) {
+    await bleDevice.gatt.disconnect();
+    logTx("切断しました");
+  } else {
+    logTx("接続されていません");
+  }
+
+  document.getElementById("freq").value = INIT_FREQ;
+  document.getElementById("duty").value = INIT_DUTY;
+  updateStatus();
+  setControlsEnabled(false);
+  logTx(">>>初期値に復帰処理実施済み");
+};
+
+// --- 値の調整 ---
+function stepValue(id, delta) {
+  const input = document.getElementById(id);
+  let val = parseFloat(input.value) || 0;
+  val += delta;
+  if (id === "duty") val = Math.min(Math.max(val,0),100);
+  if (id === "freq") val = Math.max(val,10);
+  input.value = val;
+  sendValues();
+}
+
+["freqUp","freqDown","dutyUp","dutyDown"].forEach(id => {
+  document.getElementById(id).onclick = () => {
+    stepValue(id.startsWith("freq") ? "freq" : "duty", id.endsWith("Up") ? 1 : -1);
+  };
+});
+
+document.getElementById("send").onclick = sendValues;
+document.getElementById("stop").onclick = () => {
+  document.getElementById("duty").value = 0;
+  sendValues();
+  logTx("STOP: Duty=0%");
+};
+
+// --- 入力欄から即送信を削除（手動送信のみ） ---
+// document.getElementById("freq").addEventListener("input", sendValues);
+// document.getElementById("duty").addEventListener("input", sendValues);
+
+updateStatus();
+setControlsEnabled(false);
+</script>
+</body>
+</html>
