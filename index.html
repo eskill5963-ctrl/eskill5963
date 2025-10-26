@@ -1,163 +1,196 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GitHeb eskill5963-ctrl/eskill5963</title>
-  <style>
-    body {
-      font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
-      background: linear-gradient(135deg, #e8f0ff, #f8fbff);
-      margin: 0;
-      padding: 0;
-      color: #333;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    header {
-      text-align: center;
-      background: linear-gradient(135deg, #0078d7, #005fa3);
-      color: white;
-      padding: 1rem 0.5rem;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    header h1 {
-      margin: 0;
-      font-size: 1.6rem;
-    }
-    header h2 {
-      margin: 0.3rem 0 0;
-      font-size: 1rem;
-      font-weight: 400;
-    }
-    main {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
-      padding: 1rem;
-      flex-grow: 1;
-      overflow-y: auto;
-      max-height: calc(100vh - 130px);
-    }
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
-    }
-    .card h3 {
-      color: #005fa3;
-      font-size: 1.1rem;
-      margin-bottom: 0.5rem;
-      border-left: 5px solid #0078d7;
-      padding-left: 0.4rem;
-    }
-    .card p {
-      font-size: 0.9rem;
-      line-height: 1.4;
-      margin: 0.5rem 0 1rem 0;
-    }
-    .card a {
-      text-align: center;
-      background: #0078d7;
-      color: white;
-      padding: 0.5rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: background 0.2s;
-    }
-    .card a:hover {
-      background: #005fa3;
-    }
-    footer {
-      text-align: center;
-      font-size: 0.8rem;
-      color: #555;
-      background: #e6ebf0;
-      padding: 0.5rem;
-      flex-shrink: 0;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub eskill5963-ctrl/eskill5963</title>
+<style>
+  body {
+    font-family: "Segoe UI", "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+    background-color: #f4f6f8;
+    margin: 0;
+    padding: 0;
+    color: #333;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== ヘッダー（上部バー） ===== */
+  header {
+    background: linear-gradient(90deg, #24292f, #3b4047);
+    color: #fff;
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  }
+  header h1 {
+    font-size: 1.1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  header h1::before {
+    content: "📁";
+    font-size: 1.2rem;
+  }
+  header h2 {
+    font-size: 0.9rem;
+    margin: 0;
+    color: #ddd;
+    font-weight: 400;
+  }
+
+  /* ===== メイン（ファイルグリッド） ===== */
+  main {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+    overflow-y: auto;
+  }
+
+  .file {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .file:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  }
+
+  .file-icon {
+    font-size: 2.2rem;
+    text-align: center;
+    margin-bottom: 0.4rem;
+    color: #0078d7;
+  }
+
+  .file h3 {
+    text-align: center;
+    font-size: 1rem;
+    color: #005fa3;
+    margin: 0.3rem 0;
+    word-break: break-all;
+  }
+
+  .file p {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: #555;
+    text-align: center;
+    margin: 0.3rem 0 0.8rem 0;
+  }
+
+  .file a {
+    background: #0078d7;
+    color: #fff;
+    text-align: center;
+    padding: 0.4rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+
+  .file a:hover {
+    background: #005fa3;
+  }
+
+  /* ===== フッター ===== */
+  footer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #888;
+    background: #e6ebf0;
+    padding: 0.5rem;
+    flex-shrink: 0;
+  }
+</style>
 </head>
 <body>
+
   <header>
-    <h1>GitHeb eskill5963-ctrl/eskill5963</h1>
-    <h2>プログラム置き場</h2>
+    <div>
+      <h1>eskill5963 / ctrl</h1>
+      <h2>プログラム置き場</h2>
+    </div>
   </header>
 
   <main>
-
-    <div class="card">
+    <div class="file">
+      <div class="file-icon">🧮</div>
       <h3>基数変換トレーニング</h3>
-      <p>radix_conversion.html</p>
-      <p>２進数10進数16進数の変換のミニゲーム</p>
+      <p>radix_conversion.html<br>2進数・10進数・16進数の変換ゲーム</p>
       <a href="./radix_conversion.html" target="_blank">開く</a>
     </div>
 
-    <div class="card">
+    <div class="file">
+      <div class="file-icon">🧩</div>
       <h3>基数変換電卓</h3>
-      <p>Base_Conversion_Calculator.html</p>
-      <p> 基数変換トレーニングを改造して、基数変換電卓を作成しました。検算に使ってください。</p>
+      <p>Base_Conversion_Calculator.html<br>変換ゲームを改造した基数電卓</p>
       <a href="./Base_Conversion_Calculator.html" target="_blank">開く</a>
     </div>
 
-    <div class="card">
+    <div class="file">
+      <div class="file-icon">💻</div>
       <h3>USBシリアル通信ターミナル</h3>
-      <p>web_serial_terminal.html</p>
-      <p>自作ターミナルでUSB経由の通信を実行します。</p>
+      <p>web_serial_terminal.html<br>自作ターミナルでUSB通信</p>
       <a href="./web_serial_terminal.html" target="_blank">開く</a>
     </div>
 
-    <div class="card">
+    <div class="file">
+      <div class="file-icon">📶</div>
       <h3>永久ゴマ設定（BLE通信）</h3>
-      <p>BLE_PWM_Controller.html</p>
-      <p>Bluetooth通信を利用して永久ゴマを設定します。</p>
+      <p>BLE_PWM_Controller.html<br>Bluetoothで永久ゴマ設定</p>
       <a href="./BLE_PWM_Controller.html" target="_blank">開く</a>
     </div>
 
-    <div class="card">
-      <h3>タイトル</h3>
-      <p>プログラム名</p>
-      <p>説明文</p>
+    <div class="file">
+      <div class="file-icon">📂</div>
+      <h3>サンプル1</h3>
+      <p>プログラム名<br>説明文</p>
       <a href="./" target="_blank">開く</a>
     </div>
 
-    <div class="card">
-      <h3>タイトル</h3>
-      <p>プログラム名</p>
-      <p>説明文</p>
+    <div class="file">
+      <div class="file-icon">📂</div>
+      <h3>サンプル2</h3>
+      <p>プログラム名<br>説明文</p>
       <a href="./" target="_blank">開く</a>
     </div>
 
-    <div class="card">
-      <h3>タイトル</h3>
-      <p>プログラム名</p>
-      <p>説明文</p>
+    <div class="file">
+      <div class="file-icon">📂</div>
+      <h3>サンプル3</h3>
+      <p>プログラム名<br>説明文</p>
       <a href="./" target="_blank">開く</a>
     </div>
 
-    <div class="card">
-      <h3>タイトル</h3>
-      <p>プログラム名</p>
-      <p>説明文</p>
+    <div class="file">
+      <div class="file-icon">📂</div>
+      <h3>サンプル4</h3>
+      <p>プログラム名<br>説明文</p>
       <a href="./" target="_blank">開く</a>
     </div>
-
   </main>
 
   <footer>
-    © eskill5963
+    © 2025 eskill5963
   </footer>
 </body>
 </html>
