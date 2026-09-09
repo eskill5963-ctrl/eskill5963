@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>回転ベクトルと正弦波交流の合成シミュレーション</title>
+<style>
+  :root{
+    --bg:#12181f;
+    --panel:#1a2230;
+    --ink:#e7edf5;
+    --sub:#8fa3bd;
+    --line:#2c3a4d;
+    --e1:#2fa6ff;
+    --e2:#ff5d5d;
+    --e:#3ee08f;
+    --accent:#f2b134;
+    --pact:#f2b134;
+    --preact:#c084fc;
+    --canvas-bg:#0d1219;
+  }
+
+  /* ライトテーマ（通常白） */
+  body.theme-light {
+    --bg: #e2e8f0;
+    --panel: #ffffff;
+    --ink: #0f172a;
+    --sub: #475569;
+    --line: #cbd5e1;
+    --e1: #0284c7;
+    --e2: #dc2626;
+    --e: #059669;
+    --accent: #d97706;
+    --pact: #d97706;
+    --preact: #7c3aed;
+    --canvas-bg: #f8fafc;
+  }
+
+  /* ★新規追加：高コントラスト（白地・プロジェクター特化版） */
+  body.theme-contrast-light {
+    --bg: #ffffff;
+    --panel: #ffffff;
+    --ink: #000000;
+    --sub: #000000;
+    --line: #000000;
+    --e1: #0055ff;
+    --e2: #d00000;
+    --e: #008800;
+    --accent: #cc5500;
+    --pact: #cc5500;
+    --preact: #7700cc;
+    --canvas-bg: #ffffff;
+  }
+
+  /* 高コントラストテーマ（黒地） */
+  body.theme-contrast {
+    --bg: #000000;
+    --panel: #000000;
+    --ink: #ffffff;
+    --sub: #ffff00;
+    --line: #ffffff;
+    --e1: #00ffff;
+    --e2: #ff00ff;
+    --e: #00ff00;
+    --accent: #ffff00;
+    --pact: #ffff00;
+    --preact: #ff8800;
+    --canvas-bg: #000000;
+  }
+
+  *{box-sizing:border-box;}
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  
+  /* 高コントラスト（白）選択時は文字を太字化して強調 */
+  body.theme-contrast-light {
+    font-weight: bold;
+  }
+
+  .layout{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    height: 100%;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:6px 8px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+  body.theme-contrast-light .panel {
+    border-width: 2px;
+  }
+
+  .main-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 0;
+  }
+  .modeRow{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:2px;
+    flex-wrap:wrap;
+    font-size: 0.78rem;
+  }
+  .modeToggle{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:6px;
+    overflow:hidden;
+    flex-shrink: 0;
+  }
+  body.theme-contrast-light .modeToggle { border-width: 2px; }
+
+  .modeToggle button{
+    border:none;
+    border-radius:0;
+    background:#22304399;
+    color:var(--sub);
+    padding:4px 8px;
+    font-size:.75rem;
+  }
+  body.theme-light .modeToggle button { background: #f1f5f9; }
+  body.theme-contrast-light .modeToggle button { background: #ffffff; color: #000000; font-weight: bold; }
+  body.theme-contrast .modeToggle button { background: #111111; }
+
+  .modeToggle button.active{
+    background:var(--accent);
+    color:#1a1206;
+    font-weight:600;
+  }
+  body.theme-contrast-light .modeToggle button.active {
+    background: #000000;
+    color: #ffffff;
+  }
+  body.theme-contrast .modeToggle button.active {
+    color: #000000;
+  }
+  .formulaWrap{
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-size:.75rem;
+    color:var(--sub);
+    flex-shrink: 0;
+  }
+  select{
+    background:#22304399;
+    border:1px solid var(--line);
+    color:var(--ink);
+    padding:2px 5px;
+    border-radius:4px;
+    font-size:.75rem;
+  }
+  body.theme-light select { background: #ffffff; }
+  body.theme-contrast-light select { background: #ffffff; border: 2px solid #000; font-weight: bold; }
+  body.theme-contrast select { background: #000000; }
+
+  .canvases{
+    display:flex;
+    gap:6px;
+    justify-content: flex-start;
+    align-items: center;
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+  }
+  canvas{
+    background: var(--canvas-bg);
+    border: 1px solid var(--line);
+    border-radius:6px;
+    display:block;
+    object-fit: contain;
+    transition: width 0.1s ease, height 0.1s ease, background 0.2s ease;
+  }
+  body.theme-contrast-light canvas {
+    border: 2px solid #000000;
+  }
+
+  .controls{
+    display:flex;
+    gap:8px;
+    padding: 6px 8px;
+    flex-shrink: 0;
+  }
+  .group{
+    flex:1;
+    padding-right:6px;
+    border-right:1px solid var(--line);
+  }
+  body.theme-contrast-light .group { border-right-width: 2px; }
+  .group:last-of-type{border-right:none; padding-right:0;}
+  
+  .group-title{
+    font-size:.78rem;
+    font-weight:600;
+    margin-bottom:2px;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .swatch{
+    width:9px;height:9px;border-radius:2px;display:inline-block;
+  }
+  label{
+    display:flex;
+    justify-content:space-between;
+    font-size:.7rem;
+    color:var(--sub);
+    margin-top:2px;
+  }
+  input[type=range]{
+    width:100%;
+    accent-color:var(--accent);
+    height: 20px;
+  }
+  .val{color:var(--ink); font-variant-numeric:tabular-nums;}
+  .sliderRow{
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .sliderRow input[type=range]{flex:1;}
+  .nudge{
+    width:28px;
+    height:28px;
+    flex-shrink:0;
+    padding:0;
+    font-size:.85rem;
+    line-height:1;
+  }
+  .nudge-mini {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    padding: 0;
+    font-size: 0.65rem;
+    line-height: 1;
+    border-radius: 4px;
+  }
+  .presetRow{
+    display:flex;
+    flex-wrap:wrap;
+    gap:2px;
+    margin-top:2px;
+  }
+  .preset{
+    flex:1;
+    min-width: 24px;
+    padding:2px 0;
+    font-size:.65rem;
+    text-align: center;
+  }
+  .hint{
+    font-size:.65rem;
+    color:var(--sub);
+    margin-top:1px;
+  }
+  .buttons{
+    display:flex;
+    gap:3px;
+    margin-top:3px;
+  }
+  button{
+    flex:1;
+    background:#22304399;
+    border:1px solid var(--line);
+    color:var(--ink);
+    padding:4px 5px;
+    border-radius:5px;
+    cursor:pointer;
+    font-size:.72rem;
+    touch-action: manipulation;
+  }
+  body.theme-light button { background: #f1f5f9; }
+  body.theme-contrast-light button { background: #ffffff; border: 2px solid #000000; font-weight: bold; }
+  body.theme-contrast button { background: #000000; }
+
+  button:active{background:#2c3d54;}
+  .legend{
+    display:flex;
+    gap:10px;
+    margin-top:2px;
+    font-size:.7rem;
+    color:var(--sub);
+    flex-wrap:wrap;
+    align-items:center;
+    min-height: 16px;
+  }
+  .legend span.item{display:flex; align-items:center; gap:3px;}
+  #eReadout{color:var(--ink); font-variant-numeric:tabular-nums;}
+  .hidden{display:none !important;}
+  .item-check {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.75rem;
+    color: var(--sub);
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <div class="panel main-panel">
+
+    <div class="modeRow">
+      <div class="modeToggle">
+        <button id="modeSingleBtn" class="active">1波形モード</button>
+        <button id="modeComposeBtn">2波形合成モード</button>
+      </div>
+      <label class="item-check" id="ballModeLabel" style="cursor:pointer;">
+        <input type="checkbox" id="ballModeToggle" checked> ボール円運動
+      </label>
+      <div class="formulaWrap" id="formulaWrap">
+        <span>合成:</span>
+        <select id="formulaSelect">
+          <option value="none" selected>合成なし</option>
+          <option value="add">e = e1 + e2</option>
+          <option value="sub">e = e1 − e2</option>
+          <option value="neg">e = −(e1 + e2)</option>
+          <option value="mul">e = e1 × e2(電力)</option>
+        </select>
+      </div>
+      <label class="item-check hidden" id="auxLineLabel" style="cursor:pointer;">
+        <input type="checkbox" id="auxLineToggle" checked> 補助線
+      </label>
+      
+      <!-- 波形倍率スライダー -->
+      <div class="formulaWrap">
+        <span>振幅倍率</span>
+        <input type="range" id="scaleSlider" min="0.5" max="3" step="0.1" value="1" style="width:55px;">
+        <span class="val" id="scaleVal">×1.0</span>
+      </div>
+
+      <!-- キャンバス表示サイズ変更スライダー（100%〜500%） -->
+      <div class="formulaWrap" style="background: rgba(242,177,52,0.1); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--accent); gap: 3px;">
+        <span style="color:var(--accent); font-weight:bold;">表示サイズ</span>
+        <button class="nudge-mini" id="zoomDownBtn">◀</button>
+        <input type="range" id="canvasZoomSlider" min="1.0" max="5.0" step="0.05" value="1.0" style="width:55px;">
+        <button class="nudge-mini" id="zoomUpBtn">▶</button>
+        <span class="val" id="canvasZoomVal" style="color:var(--accent); min-width:35px;">100%</span>
+      </div>
+
+      <!-- テーマ切替ドロップダウン（高コントラスト白を追加） -->
+      <div class="formulaWrap" style="background: rgba(255,255,255,0.05); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--line);">
+        <span>テーマ:</span>
+        <select id="themeSelect">
+          <option value="dark" selected>ダーク</option>
+          <option value="light">ライト</option>
+          <option value="contrast-light">高コントラスト(白)</option>
+          <option value="contrast">高コントラスト(黒)</option>
+        </select>
+      </div>
+
+      <button id="fullscreenBtn" style="flex:0 0 auto; margin-left:auto; padding: 2px 5px;">⛶ 全画面</button>
+      <button id="exitFullscreenBtn" class="hidden" style="flex:0 0 auto; margin-left:auto; padding: 2px 5px;">✕ 解除</button>
+    </div>
+
+    <div class="hint hidden" id="mulHint" style="margin:-1px 0 1px;">
+      瞬時電力 p = v×i です。橙色(有効電力P)が実際に消費される電力、紫色(無効電力Q)は電源と負荷間を往復する電力を表します。
+    </div>
+
+    <div class="canvases" id="canvasesContainer">
+      <canvas id="vectorCanvas" width="390" height="390"></canvas>
+      <canvas id="waveCanvas" width="590" height="390"></canvas>
+    </div>
+    <div class="legend">
+      <span class="item"><span class="swatch" style="background:var(--e1)"></span>e1 (E1)</span>
+      <span class="item hidden" id="e2LegendItem"><span class="swatch" style="background:var(--e2)"></span>e2 (E2)</span>
+      <span class="item hidden" id="eLegendItem"><span class="swatch" style="background:var(--e)"></span><span id="eFormula">e = e1+e2 (E)</span><span id="eReadout"></span></span>
+      <span class="item hidden" id="pactLegendItem"><span class="swatch" style="background:var(--pact)"></span>P成分(有効)</span>
+      <span class="item hidden" id="preactLegendItem"><span class="swatch" style="background:var(--preact)"></span>Q成分(無効)</span>
+      <span class="item" id="singleReadoutItem"></span>
+    </div>
+  </div>
+
+  <div class="panel controls">
+
+    <div class="group">
+      <div class="group-title"><span class="swatch" style="background:var(--e1)"></span>ベクトル E1</div>
+      <label>大きさ |E1| <span class="val" id="e1MagVal">80</span></label>
+      <input type="range" id="e1Mag" min="0" max="100" step="1" value="80">
+      <div class="hint">位相角 θ1 = 0°(固定)</div>
+    </div>
+
+    <div class="group" id="e2Group">
+      <div class="group-title"><span class="swatch" style="background:var(--e2)"></span>ベクトル E2</div>
+      <label>大きさ |E2| <span class="val" id="e2MagVal">60</span></label>
+      <input type="range" id="e2Mag" min="0" max="100" step="1" value="60">
+      <label>位相角 θ2 [deg] <span class="val" id="e2PhaseVal">90</span></label>
+      <div class="sliderRow">
+        <button class="nudge" id="e2PhaseDown">◀</button>
+        <input type="range" id="e2Phase" min="-180" max="180" step="1" value="90">
+        <button class="nudge" id="e2PhaseUp">▶</button>
+      </div>
+      <div class="presetRow">
+        <button class="preset" data-deg="-120">-120°</button>
+        <button class="preset" data-deg="-90">-90°</button>
+        <button class="preset" data-deg="-60">-60°</button>
+        <button class="preset" data-deg="-30">-30°</button>
+        <button class="preset" data-deg="0">0°</button>
+        <button class="preset" data-deg="30">30°</button>
+        <button class="preset" data-deg="60">60°</button>
+        <button class="preset" data-deg="90">90°</button>
+        <button class="preset" data-deg="120">120°</button>
+      </div>
+    </div>
+
+    <div class="group">
+      <div class="group-title">回転角度・角周波数</div>
+      <label>角度 ωt [deg] <span class="val" id="angleVal">0</span></label>
+      <input type="range" id="angleSlider" min="0" max="360" step="1" value="0">
+      <div class="buttons">
+        <button id="playBtn">再生</button>
+        <button id="resetBtn">リセット</button>
+        <button id="angleMinus45">-45°</button>
+        <button id="anglePlus45">+45°</button>
+      </div>
+      <label>角周波数 ω [rad/s] <span class="val" id="omegaVal">1.0</span></label>
+      <input type="range" id="omega" min="0" max="6.3" step="0.1" value="1.0">
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const vCanvas = document.getElementById('vectorCanvas');
+const wCanvas = document.getElementById('waveCanvas');
+const vCtx = vCanvas.getContext('2d');
+const wCtx = wCanvas.getContext('2d');
+
+const el = id => document.getElementById(id);
+const e1MagEl = el('e1Mag');
+const e2MagEl = el('e2Mag'), e2PhaseEl = el('e2Phase');
+const omegaEl = el('omega');
+const angleEl = el('angleSlider');
+const angleMinus45Btn = el('angleMinus45'), anglePlus45Btn = el('anglePlus45');
+const formulaEl = el('formulaSelect');
+const scaleEl = el('scaleSlider');
+const canvasZoomEl = el('canvasZoomSlider');
+const zoomDownBtn = el('zoomDownBtn'), zoomUpBtn = el('zoomUpBtn');
+const themeSelect = el('themeSelect');
+const playBtn = el('playBtn'), resetBtn = el('resetBtn');
+const e2PhaseDownBtn = el('e2PhaseDown'), e2PhaseUpBtn = el('e2PhaseUp');
+const readout = el('eReadout');
+const modeSingleBtn = el('modeSingleBtn'), modeComposeBtn = el('modeComposeBtn');
+const ballModeEl = el('ballModeToggle'), ballModeLabel = el('ballModeLabel');
+const auxLineEl = el('auxLineToggle'), auxLineLabel = el('auxLineLabel');
+const e2Group = el('e2Group'), formulaWrap = el('formulaWrap');
+const e2LegendItem = el('e2LegendItem'), eLegendItem = el('eLegendItem');
+const pactLegendItem = el('pactLegendItem'), preactLegendItem = el('preactLegendItem');
+const mulHint = el('mulHint');
+const singleReadoutItem = el('singleReadoutItem');
+const fullscreenBtn = el('fullscreenBtn'), exitFullscreenBtn = el('exitFullscreenBtn');
+
+let t = 0;
+let playing = false;
+let lastTime = null;
+let waveMode = 'single';
+
+const MAX_SUM = 200;
+const VECTOR_MARGIN = 15;
+const BASE_SCALE = (vCanvas.height/2 - VECTOR_MARGIN) / MAX_SUM;
+const MUL_NORM = 100;
+
+const BASE_V_WIDTH = 390;
+const BASE_V_HEIGHT = 390;
+const BASE_W_WIDTH = 590;
+const BASE_W_HEIGHT = 390;
+
+function getScale(){
+  return BASE_SCALE * parseFloat(scaleEl.value);
+}
+
+function deg2rad(d){ return d * Math.PI / 180; }
+
+function formatAngleDeg(deg){
+  deg = Math.round(deg) % 360;
+  if(deg < 0) deg += 360;
+  if(deg > 180) return `${deg}(${deg-360})`;
+  return `${deg}`;
+}
+
+function getParams(){
+  return {
+    A1: parseFloat(e1MagEl.value),
+    p1: 0,
+    A2: parseFloat(e2MagEl.value),
+    p2: deg2rad(parseFloat(e2PhaseEl.value)),
+    omega: parseFloat(omegaEl.value),
+    formula: formulaEl.value
+  };
+}
+
+function updateLabels(){
+  el('e1MagVal').textContent = e1MagEl.value;
+  el('e2MagVal').textContent = e2MagEl.value;
+  el('e2PhaseVal').textContent = e2PhaseEl.value;
+  el('omegaVal').textContent = parseFloat(omegaEl.value).toFixed(1);
+  el('angleVal').textContent = formatAngleDeg(angleEl.value);
+  el('scaleVal').textContent = '×' + parseFloat(scaleEl.value).toFixed(1);
+  el('canvasZoomVal').textContent = Math.round(parseFloat(canvasZoomEl.value) * 100) + '%';
+}
+
+function updateCanvasDisplaySize(){
+  const zoom = parseFloat(canvasZoomEl.value);
+  vCanvas.style.width = `${BASE_V_WIDTH * zoom}px`;
+  vCanvas.style.height = `${BASE_V_HEIGHT * zoom}px`;
+  wCanvas.style.width = `${BASE_W_WIDTH * zoom}px`;
+  wCanvas.style.height = `${BASE_W_HEIGHT * zoom}px`;
+  updateLabels();
+}
+
+function nudgeZoom(delta){
+  let v = parseFloat(canvasZoomEl.value) + delta;
+  v = Math.max(1.0, Math.min(5.0, v));
+  canvasZoomEl.value = v.toFixed(2);
+  updateCanvasDisplaySize();
+  const container = document.getElementById('canvasesContainer');
+  if (container) container.scrollLeft = 0;
+}
+
+function nudgePhase(delta){
+  let v = parseFloat(e2PhaseEl.value) + delta;
+  v = Math.max(-180, Math.min(180, v));
+  e2PhaseEl.value = v;
+  updateLabels();
+}
+
+function nudgeAngle(delta){
+  let v = (parseFloat(angleEl.value) + delta) % 360;
+  if(v < 0) v += 360;
+  angleEl.value = v;
+  el('angleVal').textContent = formatAngleDeg(v);
+}
+
+function combine(e1val, e2val, formula){
+  switch(formula){
+    case 'add': return e1val + e2val;
+    case 'sub': return e1val - e2val;
+    case 'neg': return -(e1val + e2val);
+    case 'mul': return (e1val * e2val) / MUL_NORM;
+  }
+}
+
+function computeSum(A1,p1,A2,p2,formula){
+  const sign = (formula === 'sub') ? -1 : 1;
+  let x = A1*Math.cos(p1) + sign*A2*Math.cos(p2);
+  let y = A1*Math.sin(p1) + sign*A2*Math.sin(p2);
+  if(formula === 'neg'){ x = -x; y = -y; }
+  const A = Math.sqrt(x*x+y*y);
+  const p = Math.atan2(y,x);
+  return {A,p};
+}
+
+function getComputedStyleColor(varName){
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+}
+
+function drawVectorPanel(wt, params){
+  const {A1,p1,A2,p2,formula} = params;
+  const w = vCanvas.width, h = vCanvas.height;
+  vCtx.clearRect(0,0,w,h);
+  const cx = w/2, cy = h/2;
+  const scale = getScale();
+
+  const isContrastLight = document.body.classList.contains('theme-contrast-light');
+  const gridColor = getComputedStyleColor('--line');
+  const subTextColor = getComputedStyleColor('--sub');
+
+  function ring(mag, color){
+    if(mag <= 0) return;
+    vCtx.strokeStyle = color;
+    vCtx.globalAlpha = isContrastLight ? 0.6 : 0.4;
+    vCtx.lineWidth = isContrastLight ? 3 : 2.5;
+    vCtx.beginPath();
+    vCtx.arc(cx,cy,mag*scale,0,2*Math.PI);
+    vCtx.stroke();
+    vCtx.globalAlpha = 1;
+  }
+
+  function toXY(mag, ang){
+    return { x: cx + mag*scale*Math.cos(ang), y: cy - mag*scale*Math.sin(ang) };
+  }
+
+  function drawArrow(mag, ang, color, opts){
+    opts = opts || {};
+    const alpha = (opts.alpha !== undefined) ? opts.alpha : 1;
+    const p = toXY(mag, ang);
+    vCtx.globalAlpha = alpha;
+    vCtx.strokeStyle = color;
+    vCtx.fillStyle = color;
+    vCtx.lineWidth = isContrastLight ? 5 : 4;
+    vCtx.beginPath();
+    vCtx.moveTo(cx,cy);
+    vCtx.lineTo(p.x,p.y);
+    vCtx.stroke();
+    if(!opts.noHead){
+      const headLen = isContrastLight ? 16 : 14;
+      const a = Math.atan2(p.y-cy, p.x-cx);
+      vCtx.beginPath();
+      vCtx.moveTo(p.x, p.y);
+      vCtx.lineTo(p.x - headLen*Math.cos(a-0.3), p.y - headLen*Math.sin(a-0.3));
+      vCtx.lineTo(p.x - headLen*Math.cos(a+0.3), p.y - headLen*Math.sin(a+0.3));
+      vCtx.closePath();
+      vCtx.fill();
+    }
+    vCtx.globalAlpha = 1;
+    return p;
+  }
+
+  function drawBall(p, color){
+    const r = 11;
+    const grad = vCtx.createRadialGradient(p.x-r*0.35, p.y-r*0.35, r*0.15, p.x, p.y, r);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.45, color);
+    grad.addColorStop(1, '#00000066');
+    vCtx.fillStyle = grad;
+    vCtx.beginPath();
+    vCtx.arc(p.x, p.y, r, 0, 2*Math.PI);
+    vCtx.fill();
+  }
+
+  let sum = null;
+  if(waveMode === 'compose' && formula !== 'mul' && formula !== 'none'){
+    sum = computeSum(A1,p1,A2,p2,formula);
+  }
+  const SUM_DRAW_FACTOR = 0.984;
+  const sumDrawA = sum ? sum.A * SUM_DRAW_FACTOR : 0;
+
+  ring(A1, getComputedStyleColor('--e1'));
+  if(waveMode === 'compose'){
+    ring(A2, getComputedStyleColor('--e2'));
+    if(sum) ring(sumDrawA, getComputedStyleColor('--e'));
+  }
+
+  vCtx.strokeStyle = gridColor;
+  vCtx.lineWidth = isContrastLight ? 2.5 : 1.5;
+  vCtx.beginPath();
+  vCtx.moveTo(0,cy); vCtx.lineTo(w,cy);
+  vCtx.moveTo(cx,0); vCtx.lineTo(cx,h);
+  vCtx.stroke();
+  vCtx.fillStyle = subTextColor;
+  vCtx.font = isContrastLight ? 'bold 14px sans-serif' : '13px sans-serif';
+  vCtx.fillText('x', w-12, cy-5);
+  vCtx.fillText('y', cx+5, 12);
+
+  const angle1 = wt + p1;
+  const e1Color = getComputedStyleColor('--e1');
+  if(waveMode === 'single' && ballModeEl.checked){
+    const tip1 = drawArrow(A1, angle1, e1Color, {alpha:0.35, noHead:true});
+    drawBall(tip1, e1Color);
+  } else {
+    drawArrow(A1, angle1, e1Color);
+  }
+
+  if(waveMode === 'compose'){
+    const angle2 = wt + p2;
+
+    if(auxLineEl.checked && sum && (formula === 'add' || formula === 'sub')){
+      const tip1 = toXY(A1, angle1);
+      const tip2 = (formula === 'sub') ? toXY(A2, angle2 + Math.PI) : toXY(A2, angle2);
+      const tipSum = toXY(sumDrawA, wt + sum.p);
+      vCtx.strokeStyle = subTextColor;
+      vCtx.globalAlpha = 0.8;
+      vCtx.lineWidth = isContrastLight ? 2 : 1.5;
+      vCtx.setLineDash([5,4]);
+      vCtx.beginPath();
+      vCtx.moveTo(tip1.x, tip1.y);
+      vCtx.lineTo(tipSum.x, tipSum.y);
+      vCtx.moveTo(tip2.x, tip2.y);
+      vCtx.lineTo(tipSum.x, tipSum.y);
+      vCtx.stroke();
+      vCtx.setLineDash([]);
+      vCtx.globalAlpha = 1;
+    }
+
+    drawArrow(A2, angle2, getComputedStyleColor('--e2'));
+    if(formula === 'sub'){
+      drawArrow(A2, angle2 + Math.PI, subTextColor);
+    }
+    if(sum){
+      const angleE = wt + sum.p;
+      drawArrow(sumDrawA, angleE, getComputedStyleColor('--e'));
+    }
+  }
+
+  vCtx.fillStyle = subTextColor;
+  vCtx.font = isContrastLight ? 'bold 11px sans-serif' : '10px sans-serif';
+  vCtx.textAlign = 'right';
+  vCtx.fillText('2026.09 Fzou', w-6, h-6);
+  vCtx.textAlign = 'left';
+}
+
+function drawWavePanel(wt, params){
+  const {A1,p1,A2,p2,formula} = params;
+  const w = wCanvas.width, h = wCanvas.height;
+  wCtx.clearRect(0,0,w,h);
+  const marginL = 35, marginR = 12, marginT = 16, marginB = 24;
+  const plotW = w - marginL - marginR;
+  const plotH = h - marginT - marginB;
+  const midY = marginT + plotH/2;
+  const yScale = getScale();
+
+  const isContrastLight = document.body.classList.contains('theme-contrast-light');
+  const gridColor = getComputedStyleColor('--line');
+  const subTextColor = getComputedStyleColor('--sub');
+  const accentColor = getComputedStyleColor('--accent');
+
+  const phiSpan = 2.25 * Math.PI;
+
+  function phiToX(phi){
+    return marginL + (phi/phiSpan) * plotW;
+  }
+  function valToY(v){
+    return midY - v*yScale;
+  }
+
+  wCtx.strokeStyle = gridColor;
+  wCtx.lineWidth = isContrastLight ? 2.5 : 1.5;
+  wCtx.beginPath();
+  wCtx.moveTo(marginL, midY); wCtx.lineTo(w-marginR, midY);
+  wCtx.moveTo(marginL, marginT); wCtx.lineTo(marginL, h-marginB);
+  wCtx.stroke();
+  wCtx.fillStyle = subTextColor;
+  wCtx.font = isContrastLight ? 'bold 13px sans-serif' : '12px sans-serif';
+  wCtx.fillText('現在値', marginL-28, marginT-4);
+  wCtx.fillText('ωt', w-marginR-12, midY+14);
+
+  wCtx.strokeStyle = gridColor;
+  wCtx.lineWidth = isContrastLight ? 1.5 : 1;
+  wCtx.font = isContrastLight ? 'bold 12px sans-serif' : '11px sans-serif';
+
+  const gridSteps = [
+    { phi: 0, label: '0' },
+    { phi: 0.5 * Math.PI, label: 'π/2' },
+    { phi: 1.0 * Math.PI, label: 'π' },
+    { phi: 1.5 * Math.PI, label: '3π/2' },
+    { phi: 2.0 * Math.PI, label: '2π' }
+  ];
+
+  gridSteps.forEach(step => {
+    const x = phiToX(step.phi);
+    if(x <= w - marginR) {
+      wCtx.beginPath();
+      wCtx.moveTo(x, marginT); wCtx.lineTo(x, h-marginB);
+      wCtx.stroke();
+      wCtx.fillText(step.label, x-10, h-marginB+12);
+    }
+  });
+
+  function plotSeries(fn, color){
+    wCtx.strokeStyle = color;
+    wCtx.lineWidth = isContrastLight ? 4.8 : 3.8;
+    wCtx.lineJoin = 'round';
+    wCtx.beginPath();
+    const steps = 300;
+    for(let i=0;i<=steps;i++){
+      const phi = (i/steps)*phiSpan;
+      const x = phiToX(phi);
+      const y = valToY(fn(phi));
+      if(i===0) wCtx.moveTo(x,y); else wCtx.lineTo(x,y);
+    }
+    wCtx.stroke();
+  }
+
+  function originDot(val, color){
+    wCtx.fillStyle = color;
+    wCtx.beginPath();
+    wCtx.arc(marginL, valToY(val), isContrastLight ? 6.5 : 5.5, 0, 2*Math.PI);
+    wCtx.fill();
+  }
+
+  plotSeries(phi => A1*Math.sin(wt+p1+phi), getComputedStyleColor('--e1'));
+  originDot(A1*Math.sin(wt+p1), getComputedStyleColor('--e1'));
+
+  if(waveMode === 'compose'){
+    plotSeries(phi => A2*Math.sin(wt+p2+phi), getComputedStyleColor('--e2'));
+    originDot(A2*Math.sin(wt+p2), getComputedStyleColor('--e2'));
+
+    if(formula !== 'none'){
+      plotSeries(phi => combine(A1*Math.sin(wt+p1+phi), A2*Math.sin(wt+p2+phi), formula), getComputedStyleColor('--e'));
+      originDot(combine(A1*Math.sin(wt+p1), A2*Math.sin(wt+p2), formula), getComputedStyleColor('--e'));
+    }
+
+    if(formula === 'mul'){
+      const P = (A1*A2/2)*Math.cos(p2) / MUL_NORM;
+      const Q = (A1*A2/2)*Math.sin(p2) / MUL_NORM;
+
+      wCtx.setLineDash([5,3]);
+      plotSeries(phi => P*(1-Math.cos(2*(wt+phi))), getComputedStyleColor('--pact'));
+      plotSeries(phi => Q*Math.sin(2*(wt+phi)), getComputedStyleColor('--preact'));
+      wCtx.setLineDash([]);
+
+      wCtx.strokeStyle = getComputedStyleColor('--pact');
+      wCtx.lineWidth = isContrastLight ? 2.5 : 1.5;
+      wCtx.setLineDash([2,3]);
+      wCtx.beginPath();
+      wCtx.moveTo(marginL, valToY(P));
+      wCtx.lineTo(w-marginR, valToY(P));
+      wCtx.stroke();
+      wCtx.setLineDash([]);
+    }
+  }
+
+  wCtx.strokeStyle = accentColor;
+  wCtx.lineWidth = isContrastLight ? 3 : 2;
+  wCtx.setLineDash([4,3]);
+  wCtx.beginPath();
+  wCtx.moveTo(marginL, marginT);
+  wCtx.lineTo(marginL, h-marginB);
+  wCtx.stroke();
+  wCtx.setLineDash([]);
+}
+
+function updateFormulaLabel(){
+  const formula = formulaEl.value;
+  let label;
+  switch(formula){
+    case 'add': label = 'e = e1+e2 (E)'; break;
+    case 'sub': label = 'e = e1−e2 (E)'; break;
+    case 'neg': label = 'e = −(e1+e2) (E)'; break;
+    case 'mul': label = 'p = v×i ÷100 (E)'; break;
+    case 'none': label = ''; break;
+  }
+  el('eFormula').textContent = label;
+}
+
+function applyWaveMode(){
+  const isCompose = (waveMode === 'compose');
+  const isMul = isCompose && (formulaEl.value === 'mul');
+  const isNone = isCompose && (formulaEl.value === 'none');
+  modeSingleBtn.classList.toggle('active', !isCompose);
+  modeComposeBtn.classList.toggle('active', isCompose);
+  e2Group.classList.toggle('hidden', !isCompose);
+  formulaWrap.classList.toggle('hidden', !isCompose);
+  e2LegendItem.classList.toggle('hidden', !isCompose);
+  eLegendItem.classList.toggle('hidden', !isCompose || isNone);
+  singleReadoutItem.classList.toggle('hidden', isCompose && !isNone);
+  mulHint.classList.toggle('hidden', !isMul);
+  pactLegendItem.classList.toggle('hidden', !isMul);
+  preactLegendItem.classList.toggle('hidden', !isMul);
+  ballModeLabel.classList.toggle('hidden', isCompose);
+  auxLineLabel.classList.toggle('hidden', !isCompose);
+}
+
+function step(timestamp){
+  if(lastTime === null) lastTime = timestamp;
+  const dt = (timestamp - lastTime)/1000;
+  lastTime = timestamp;
+
+  const params = getParams();
+
+  if(playing){
+    t += dt * params.omega;
+    let deg = (t*180/Math.PI) % 360;
+    if(deg < 0) deg += 360;
+    angleEl.value = deg;
+    el('angleVal').textContent = formatAngleDeg(deg);
+  } else {
+    t = deg2rad(parseFloat(angleEl.value));
+  }
+
+  const wt = t;
+  const e1 = params.A1 * Math.sin(wt + params.p1);
+  const e2 = params.A2 * Math.sin(wt + params.p2);
+
+  drawVectorPanel(wt, params);
+  drawWavePanel(wt, params);
+
+  if(waveMode === 'compose'){
+    if(params.formula === 'none'){
+      singleReadoutItem.textContent = `瞬時値 e1=${e1.toFixed(1)}V, e2=${e2.toFixed(1)}V`;
+    } else {
+      const e = combine(e1, e2, params.formula);
+      if(params.formula === 'mul'){
+        const P = (params.A1*params.A2/2)*Math.cos(params.p2);
+        const Q = (params.A1*params.A2/2)*Math.sin(params.p2);
+        const S = Math.sqrt(P*P+Q*Q);
+        readout.textContent =
+          ` P=${P.toFixed(1)}, Q=${Q.toFixed(1)}, S=${S.toFixed(1)} `+
+          `／ e1=${e1.toFixed(1)}V, e2=${e2.toFixed(1)}V, p=${e.toFixed(1)}`;
+      } else {
+        const sum = computeSum(params.A1, params.p1, params.A2, params.p2, params.formula);
+        readout.textContent =
+          ` |E|=${sum.A.toFixed(1)}, θ=${(sum.p*180/Math.PI).toFixed(1)}° `+
+          `／ e1=${e1.toFixed(1)}V, e2=${e2.toFixed(1)}V, e=${e.toFixed(1)}V`;
+      }
+    }
+  } else {
+    singleReadoutItem.textContent = `|E1|=${params.A1.toFixed(0)} ／ 瞬時値 e1=${e1.toFixed(1)}V`;
+  }
+
+  requestAnimationFrame(step);
+}
+
+[e1MagEl,e2MagEl,e2PhaseEl,omegaEl,scaleEl].forEach(inp=>{
+  inp.addEventListener('input', updateLabels);
+});
+
+canvasZoomEl.addEventListener('input', () => {
+  updateCanvasDisplaySize();
+  const container = document.getElementById('canvasesContainer');
+  if (container) container.scrollLeft = 0;
+});
+
+zoomDownBtn.addEventListener('click', () => nudgeZoom(-0.05));
+zoomUpBtn.addEventListener('click', () => nudgeZoom(0.05));
+
+themeSelect.addEventListener('change', () => {
+  const theme = themeSelect.value;
+  document.body.classList.remove('theme-light', 'theme-contrast-light', 'theme-contrast');
+  if (theme === 'light') {
+    document.body.classList.add('theme-light');
+  } else if (theme === 'contrast-light') {
+    document.body.classList.add('theme-contrast-light');
+  } else if (theme === 'contrast') {
+    document.body.classList.add('theme-contrast');
+  }
+});
+
+angleEl.addEventListener('input', ()=>{
+  el('angleVal').textContent = formatAngleDeg(angleEl.value);
+});
+
+angleMinus45Btn.addEventListener('click', ()=> nudgeAngle(-45));
+anglePlus45Btn.addEventListener('click', ()=> nudgeAngle(45));
+
+formulaEl.addEventListener('change', ()=>{
+  updateFormulaLabel();
+  applyWaveMode();
+});
+
+e2PhaseDownBtn.addEventListener('click', ()=> nudgePhase(-1));
+e2PhaseUpBtn.addEventListener('click', ()=> nudgePhase(1));
+
+document.querySelectorAll('.preset').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    e2PhaseEl.value = btn.dataset.deg;
+    updateLabels();
+  });
+});
+
+modeSingleBtn.addEventListener('click', ()=>{
+  waveMode = 'single';
+  applyWaveMode();
+});
+modeComposeBtn.addEventListener('click', ()=>{
+  waveMode = 'compose';
+  applyWaveMode();
+});
+
+playBtn.addEventListener('click', ()=>{
+  playing = !playing;
+  playBtn.textContent = playing ? '停止' : '再生';
+  lastTime = null;
+});
+
+resetBtn.addEventListener('click', ()=>{
+  t = 0;
+  angleEl.value = 0;
+  el('angleVal').textContent = 0;
+  lastTime = null;
+});
+
+function requestFs(elm){
+  if(elm.requestFullscreen) return elm.requestFullscreen();
+  if(elm.webkitRequestFullscreen) return elm.webkitRequestFullscreen();
+}
+function exitFs(){
+  if(document.exitFullscreen) return document.exitFullscreen();
+  if(document.webkitExitFullscreen) return document.webkitExitFullscreen();
+}
+function currentFsElement(){
+  return document.fullscreenElement || document.webkitFullscreenElement || null;
+}
+function onFullscreenChange(){
+  const isFs = !!currentFsElement();
+  fullscreenBtn.classList.toggle('hidden', isFs);
+  exitFullscreenBtn.classList.toggle('hidden', !isFs);
+}
+
+fullscreenBtn.addEventListener('click', ()=> requestFs(document.documentElement));
+exitFullscreenBtn.addEventListener('click', exitFs);
+document.addEventListener('fullscreenchange', onFullscreenChange);
+document.addEventListener('webkitfullscreenchange', onFullscreenChange);
+
+updateLabels();
+updateFormulaLabel();
+applyWaveMode();
+requestAnimationFrame(step);
+</script>
+
+</body>
+</html>
