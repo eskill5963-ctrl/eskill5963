@@ -295,18 +295,25 @@
   body.theme-contrast button { background: #000000; }
 
   button:active{background:#2c3d54;}
+  
+  /* 凡例レイアウト（2行構成） */
   .legend{
     display:flex;
-    gap:10px;
+    flex-direction: column;
+    gap:4px;
     margin-top:2px;
     font-size:.7rem;
     color:var(--sub);
-    flex-wrap:wrap;
-    align-items:center;
     min-height: 16px;
   }
+  .legend-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
   .legend span.item{display:flex; align-items:center; gap:3px;}
-  #eReadout{color:var(--ink); font-variant-numeric:tabular-nums;}
+  #eReadout{color:var(--ink); font-variant-numeric:tabular-nums; font-weight:bold;}
   .hidden{display:none !important;}
   .item-check {
     display: flex;
@@ -348,7 +355,7 @@
       <!-- 波形倍率スライダー -->
       <div class="formulaWrap">
         <span>振幅倍率</span>
-        <input type="range" id="scaleSlider" style="width:55px;">
+        <input type="range" id="scaleSlider" min="0.5" max="3" step="0.1" value="1" style="width:55px;">
         <span class="val" id="scaleVal">×1.0</span>
       </div>
 
@@ -356,16 +363,16 @@
       <div class="formulaWrap" style="background: rgba(242,177,52,0.1); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--accent); gap: 3px;">
         <span style="color:var(--accent); font-weight:bold;">表示サイズ</span>
         <button class="nudge-mini" id="zoomDownBtn">◀</button>
-        <input type="range" id="canvasZoomSlider" style="width:55px;">
+        <input type="range" id="canvasZoomSlider" min="0.35" max="5.0" step="0.05" value="1.0" style="width:55px;">
         <button class="nudge-mini" id="zoomUpBtn">▶</button>
         <span class="val" id="canvasZoomVal" style="color:var(--accent); min-width:35px;">100%</span>
       </div>
 
-      <!-- テーマ切替ドロップダウン -->
+      <!-- テーマ切替 -->
       <div class="formulaWrap" style="background: rgba(255,255,255,0.05); padding: 2px 5px; border-radius: 4px; border: 1px solid var(--line);">
         <span>テーマ:</span>
         <select id="themeSelect">
-          <option value="dark">ダーク</option>
+          <option value="dark" selected>ダーク</option>
           <option value="light">ライト</option>
           <option value="contrast-light">高コントラスト(白)</option>
           <option value="contrast">高コントラスト(黒)</option>
@@ -384,33 +391,47 @@
       <canvas id="vectorCanvas" width="390" height="390"></canvas>
       <canvas id="waveCanvas" width="590" height="390"></canvas>
     </div>
+
+    <!-- 凡例エリア（2行構成） -->
     <div class="legend">
-      <span class="item"><span class="swatch" style="background:var(--e1)"></span>e1 (E1)</span>
-      <span class="item hidden" id="e2LegendItem"><span class="swatch" style="background:var(--e2)"></span>e2 (E2)</span>
-      <span class="item hidden" id="eLegendItem"><span class="swatch" style="background:var(--e)"></span><span id="eFormula">e = e1+e2 (E)</span><span id="eReadout"></span></span>
-      <span class="item hidden" id="pactLegendItem"><span class="swatch" style="background:var(--pact)"></span>P成分(有効)</span>
-      <span class="item hidden" id="preactLegendItem"><span class="swatch" style="background:var(--preact)"></span>Q成分(無効)</span>
-      <span class="item" id="singleReadoutItem"></span>
+      <!-- 1行目：値と色（スウォッチ、式、計算結果） -->
+      <div class="legend-row" id="legendRow1">
+        <span class="item hidden" id="eLegendItem">
+          <span class="swatch" style="background:var(--e)"></span>
+          <span id="eFormula">e = e1+e2 (E)</span>
+          <span id="eReadout"></span>
+        </span>
+      </div>
+
+      <!-- 2行目：各種値（ベクトル名称、各成分、瞬時値） -->
+      <div class="legend-row" id="legendRow2">
+        <span class="item"><span class="swatch" style="background:var(--e1)"></span>e1 (E1)</span>
+        <span class="item hidden" id="e2LegendItem"><span class="swatch" style="background:var(--e2)"></span>e2 (E2)</span>
+        <span class="item hidden" id="pactLegendItem"><span class="swatch" style="background:var(--pact)"></span>P成分(有効)</span>
+        <span class="item hidden" id="preactLegendItem"><span class="swatch" style="background:var(--preact)"></span>Q成分(無効)</span>
+        <span class="item" id="singleReadoutItem"></span>
+      </div>
     </div>
+
   </div>
 
   <div class="panel controls">
 
     <div class="group">
       <div class="group-title"><span class="swatch" style="background:var(--e1)"></span>ベクトル E1</div>
-      <label>大きさ |E1| <span class="val" id="e1MagVal">0</span></label>
-      <input type="range" id="e1Mag">
+      <label>大きさ |E1| <span class="val" id="e1MagVal">80</span></label>
+      <input type="range" id="e1Mag" min="0" max="100" step="1" value="80">
       <div class="hint">位相角 θ1 = 0°(固定)</div>
     </div>
 
     <div class="group" id="e2Group">
       <div class="group-title"><span class="swatch" style="background:var(--e2)"></span>ベクトル E2</div>
-      <label>大きさ |E2| <span class="val" id="e2MagVal">0</span></label>
-      <input type="range" id="e2Mag">
-      <label>位相角 θ2 [deg] <span class="val" id="e2PhaseVal">0</span></label>
+      <label>大きさ |E2| <span class="val" id="e2MagVal">60</span></label>
+      <input type="range" id="e2Mag" min="0" max="100" step="1" value="60">
+      <label>位相角 θ2 [deg] <span class="val" id="e2PhaseVal">90</span></label>
       <div class="sliderRow">
         <button class="nudge" id="e2PhaseDown">◀</button>
-        <input type="range" id="e2Phase">
+        <input type="range" id="e2Phase" min="-180" max="180" step="1" value="90">
         <button class="nudge" id="e2PhaseUp">▶</button>
       </div>
       <div class="presetRow">
@@ -429,15 +450,15 @@
     <div class="group">
       <div class="group-title">回転角度・角周波数</div>
       <label>角度 ωt [deg] <span class="val" id="angleVal">0</span></label>
-      <input type="range" id="angleSlider">
+      <input type="range" id="angleSlider" min="0" max="360" step="1" value="0">
       <div class="buttons">
         <button id="playBtn">再生</button>
         <button id="resetBtn">リセット</button>
         <button id="angleMinus45">-45°</button>
         <button id="anglePlus45">+45°</button>
       </div>
-      <label>角周波数 ω [rad/s] <span class="val" id="omegaVal">0</span></label>
-      <input type="range" id="omega">
+      <label>角周波数 ω [rad/s] <span class="val" id="omegaVal">1.0</span></label>
+      <input type="range" id="omega" min="0" max="6.3" step="0.1" value="1.0">
     </div>
 
   </div>
@@ -445,30 +466,6 @@
 </div>
 
 <script>
-/* ===================================================
-   ★設定パラメータ集中管理オブジェクト (CONFIG)
-   最小値, 最大値, 初期値, ステップ等をここで一元管理
-   =================================================== */
-const CONFIG = {
-  // 振幅倍率
-  scale:   { init: 1.0, min: 0.5, max: 3.0, step: 0.1 },
-  // キャンバス表示サイズ (1.0 = 100%)
-  zoom:    { init: 1.0, min: 0.35, max: 5.0, step: 0.05 },
-  // ベクトルE1 大きさ
-  e1Mag:   { init: 80,  min: 0,   max: 100, step: 1 },
-  // ベクトルE2 大きさ
-  e2Mag:   { init: 60,  min: 0,   max: 100, step: 1 },
-  // ベクトルE2 位相角 [deg]
-  e2Phase: { init: 90,  min: -180,max: 180, step: 1 },
-  // 角周波数 ω [rad/s]
-  omega:   { init: 1.0, min: 1.0, max: 6.3, step: 0.1 },
-  // 角度 ωt [deg]
-  angle:   { init: 0,   min: 0,   max: 360, step: 1 },
-  
-  // デフォルトテーマ ('dark', 'light', 'contrast-light', 'contrast')
-  defaultTheme: 'dark'
-};
-
 const vCanvas = document.getElementById('vectorCanvas');
 const wCanvas = document.getElementById('waveCanvas');
 const vCtx = vCanvas.getContext('2d');
@@ -512,28 +509,6 @@ const BASE_V_WIDTH = 390;
 const BASE_V_HEIGHT = 390;
 const BASE_W_WIDTH = 590;
 const BASE_W_HEIGHT = 390;
-
-// CONFIGからスライダーに範囲属性を設定する関数
-function applyConfigToInput(inputEl, cfg) {
-  inputEl.min = cfg.min;
-  inputEl.max = cfg.max;
-  inputEl.step = cfg.step;
-  inputEl.value = cfg.init;
-}
-
-// CONFIGの初期適用
-function initConfig() {
-  applyConfigToInput(scaleEl, CONFIG.scale);
-  applyConfigToInput(canvasZoomEl, CONFIG.zoom);
-  applyConfigToInput(e1MagEl, CONFIG.e1Mag);
-  applyConfigToInput(e2MagEl, CONFIG.e2Mag);
-  applyConfigToInput(e2PhaseEl, CONFIG.e2Phase);
-  applyConfigToInput(omegaEl, CONFIG.omega);
-  applyConfigToInput(angleEl, CONFIG.angle);
-
-  themeSelect.value = CONFIG.defaultTheme;
-  setTheme(CONFIG.defaultTheme);
-}
 
 function getScale(){
   return BASE_SCALE * parseFloat(scaleEl.value);
@@ -580,7 +555,7 @@ function updateCanvasDisplaySize(){
 
 function nudgeZoom(delta){
   let v = parseFloat(canvasZoomEl.value) + delta;
-  v = Math.max(CONFIG.zoom.min, Math.min(CONFIG.zoom.max, v));
+  v = Math.max(0.35, Math.min(5.0, v));
   canvasZoomEl.value = v.toFixed(2);
   updateCanvasDisplaySize();
   const container = document.getElementById('canvasesContainer');
@@ -589,7 +564,7 @@ function nudgeZoom(delta){
 
 function nudgePhase(delta){
   let v = parseFloat(e2PhaseEl.value) + delta;
-  v = Math.max(CONFIG.e2Phase.min, Math.min(CONFIG.e2Phase.max, v));
+  v = Math.max(-180, Math.min(180, v));
   e2PhaseEl.value = v;
   updateLabels();
 }
@@ -903,23 +878,12 @@ function applyWaveMode(){
   formulaWrap.classList.toggle('hidden', !isCompose);
   e2LegendItem.classList.toggle('hidden', !isCompose);
   eLegendItem.classList.toggle('hidden', !isCompose || isNone);
-  singleReadoutItem.classList.toggle('hidden', isCompose && !isNone);
+  singleReadoutItem.classList.toggle('hidden', false);
   mulHint.classList.toggle('hidden', !isMul);
   pactLegendItem.classList.toggle('hidden', !isMul);
   preactLegendItem.classList.toggle('hidden', !isMul);
   ballModeLabel.classList.toggle('hidden', isCompose);
   auxLineLabel.classList.toggle('hidden', !isCompose);
-}
-
-function setTheme(theme) {
-  document.body.classList.remove('theme-light', 'theme-contrast-light', 'theme-contrast');
-  if (theme === 'light') {
-    document.body.classList.add('theme-light');
-  } else if (theme === 'contrast-light') {
-    document.body.classList.add('theme-contrast-light');
-  } else if (theme === 'contrast') {
-    document.body.classList.add('theme-contrast');
-  }
 }
 
 function step(timestamp){
@@ -948,6 +912,7 @@ function step(timestamp){
 
   if(waveMode === 'compose'){
     if(params.formula === 'none'){
+      readout.textContent = '';
       singleReadoutItem.textContent = `瞬時値 e1=${e1.toFixed(1)}V, e2=${e2.toFixed(1)}V`;
     } else {
       const e = combine(e1, e2, params.formula);
@@ -955,17 +920,16 @@ function step(timestamp){
         const P = (params.A1*params.A2/2)*Math.cos(params.p2);
         const Q = (params.A1*params.A2/2)*Math.sin(params.p2);
         const S = Math.sqrt(P*P+Q*Q);
-        readout.textContent =
-          ` P=${P.toFixed(1)}, Q=${Q.toFixed(1)}, S=${S.toFixed(1)} `+
-          `／ e1=${e1.toFixed(1)}V, e2=${e2.toFixed(1)}V, p=${e.toFixed(1)}`;
+        readout.textContent = ` : P=${P.toFixed(1)}, Q=${Q.toFixed(1)}, S=${S.toFixed(1)}`;
+        singleReadoutItem.textContent = `瞬時値 e1=${e1.toFixed(1)}V, e2=${e2.toFixed(1)}V, p=${e.toFixed(1)}`;
       } else {
         const sum = computeSum(params.A1, params.p1, params.A2, params.p2, params.formula);
-        readout.textContent =
-          ` |E|=${sum.A.toFixed(1)}, θ=${(sum.p*180/Math.PI).toFixed(1)}° `+
-          `／ e1=${e1.toFixed(1)}V, e2=${e2.toFixed(1)}V, e=${e.toFixed(1)}V`;
+        readout.textContent = ` : |E|=${sum.A.toFixed(1)}, θ=${(sum.p*180/Math.PI).toFixed(1)}°`;
+        singleReadoutItem.textContent = `瞬時値 e1=${e1.toFixed(1)}V, e2=${e2.toFixed(1)}V, e=${e.toFixed(1)}V`;
       }
     }
   } else {
+    readout.textContent = '';
     singleReadoutItem.textContent = `|E1|=${params.A1.toFixed(0)} ／ 瞬時値 e1=${e1.toFixed(1)}V`;
   }
 
@@ -982,10 +946,20 @@ canvasZoomEl.addEventListener('input', () => {
   if (container) container.scrollLeft = 0;
 });
 
-zoomDownBtn.addEventListener('click', () => nudgeZoom(-CONFIG.zoom.step));
-zoomUpBtn.addEventListener('click', () => nudgeZoom(CONFIG.zoom.step));
+zoomDownBtn.addEventListener('click', () => nudgeZoom(-0.05));
+zoomUpBtn.addEventListener('click', () => nudgeZoom(0.05));
 
-themeSelect.addEventListener('change', () => setTheme(themeSelect.value));
+themeSelect.addEventListener('change', () => {
+  const theme = themeSelect.value;
+  document.body.classList.remove('theme-light', 'theme-contrast-light', 'theme-contrast');
+  if (theme === 'light') {
+    document.body.classList.add('theme-light');
+  } else if (theme === 'contrast-light') {
+    document.body.classList.add('theme-contrast-light');
+  } else if (theme === 'contrast') {
+    document.body.classList.add('theme-contrast');
+  }
+});
 
 angleEl.addEventListener('input', ()=>{
   el('angleVal').textContent = formatAngleDeg(angleEl.value);
@@ -1026,8 +1000,8 @@ playBtn.addEventListener('click', ()=>{
 
 resetBtn.addEventListener('click', ()=>{
   t = 0;
-  angleEl.value = CONFIG.angle.init;
-  el('angleVal').textContent = formatAngleDeg(CONFIG.angle.init);
+  angleEl.value = 0;
+  el('angleVal').textContent = 0;
   lastTime = null;
 });
 
@@ -1053,8 +1027,6 @@ exitFullscreenBtn.addEventListener('click', exitFs);
 document.addEventListener('fullscreenchange', onFullscreenChange);
 document.addEventListener('webkitfullscreenchange', onFullscreenChange);
 
-// 初期化実行
-initConfig();
 updateLabels();
 updateFormulaLabel();
 applyWaveMode();
