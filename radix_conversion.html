@@ -119,6 +119,7 @@
   .easy-bg { background: #ccffcc; }
   .normal-bg { background: #80bfff; }
   .hard-bg { background: #ffa8a8; }
+  .veryhard-bg { background: #e1bee7; }
 </style>
 </head>
 <body>
@@ -127,7 +128,7 @@
   <h1>基数変換トレーニング</h1>
 
   <div class="top-row">
-    <div class="info" id="stats">正答率: 0 / 0　スコア: 0</div>
+    <div class="info" id="stats">正答率: 0 / 0 スコア: 0</div>
     <div>
       <select id="modeSelect" title="出題モード">
         <option value="7">random</option>
@@ -138,9 +139,11 @@
         <option value="5">10→16</option>
         <option value="6">16→10</option>
       </select>
-      <label style="margin-left:6px;">
-        <input type="checkbox" id="levelChk"> 難易度
-      </label>
+      <select id="levelSelect" title="難易度選択" style="margin-left:4px;">
+        <option value="1">Easy</option>
+        <option value="2">Normal</option>
+        <option value="3">Hard</option>
+      </select>
     </div>
   </div>
 
@@ -179,13 +182,15 @@
     <div class="key wide enter" id="kbdEnter">ENTER</div>
   </div>
 
-  <div class="info" id="footer">&#169; 2025 Ibaraki Technology High School</div>
+  <div class="info" id="footer">&#169; 2026 Ibaraki Technology High School</div>
 </div>
 
 <script>
-const High_mode_Probability = 10;
-const e_point=1,n_point=8,h_point=18;
-let x, mode, level_mode=1, set_mode=7;
+const VeryHard_Probability = 10; // VeryHardの出現確率（%）
+const e_point=1, n_point=8, h_point=18, vh_point=30;
+let x, mode, set_mode=7;
+let selected_level = 1; // 選択された基本難易度 (1:Easy, 2:Normal, 3:Hard)
+let current_level = 1;  // 現在の問題の難易度 (1:Easy, 2:Normal, 3:Hard, 4:Very Hard)
 let score=0, correctRate=0, total=0;
 let old_x=0, old_intext="";
 
@@ -194,7 +199,7 @@ const qNum=document.getElementById("questionNum");
 const input=document.getElementById("answerInput");
 const resultBox=document.getElementById("resultBox");
 const stats=document.getElementById("stats");
-const levelChk=document.getElementById("levelChk");
+const levelSelect=document.getElementById("levelSelect");
 const levelText=document.getElementById("levelText");
 const modeSelect=document.getElementById("modeSelect");
 const enterBtn=document.getElementById("enterBtn");
@@ -203,7 +208,12 @@ const kbd=document.getElementById("softKbd");
 const clearKey=document.getElementById("clearKey");
 const allKeys=document.querySelectorAll(".kbd .key[data-key]");
 
-function init(){ mode=Math.floor(Math.random()*6)+1; x_random(); updateQuestion(); updateKeys(); }
+function init(){
+  mode = (set_mode === 7) ? Math.floor(Math.random()*6)+1 : set_mode;
+  x_random();
+  updateQuestion();
+  updateKeys();
+}
 
 function updateQuestion(){
   const q=[
@@ -219,20 +229,38 @@ function updateQuestion(){
   if(mode==1||mode==3) qNum.textContent=x.toString(2);
   if(mode==4||mode==6) qNum.textContent=x.toString(16).toUpperCase();
 
-  levelText.textContent=(level_mode==1)?"難易度: Easy (4bitまでの数を出題 ["+e_point+"点])":
-                       (level_mode==2)?"難易度: Normal (7bitまでの数を出題 ["+n_point+"点])":
-                       "難易度: Hard (8bit以上の数を出題 ["+h_point+"点])";
-  document.body.className=level_mode==1?"easy-bg":level_mode==2?"normal-bg":"hard-bg";
+  levelText.textContent = (current_level==1) ? "難易度: Easy (4bitまでの数値 ["+e_point+"点])" :
+                          (current_level==2) ? "難易度: Normal (5～6bitの数値 ["+n_point+"点])" :
+                          (current_level==3) ? "難易度: Hard (7～8bitの数値 ["+h_point+"点])" :
+                          "難易度: Very Hard (9～10bitの数値 ["+vh_point+"点])";
+
+  document.body.className = (current_level==1) ? "easy-bg" :
+                            (current_level==2) ? "normal-bg" :
+                            (current_level==3) ? "hard-bg" : "veryhard-bg";
 
   updateKeys(); // キー状態更新
 }
 
 function x_random(){
-  if(level_mode==1){x=intRand(2,15);}
-  if(level_mode==1&&(mode==5||mode==6)){x=intRand(10,15);}
-  if(level_mode==2){x=intRand(16,127);}
-  if(level_mode==3){x=intRand(128,511);}
+  // ランダム判定で Very Hard(level 4) になるかチェック
+  if(Math.random() < VeryHard_Probability / 100){
+    current_level = 4;
+  } else {
+    current_level = selected_level;
+  }
+
+  if(current_level == 1){ // Easy: 4bitまで (1～15)
+    x = intRand(1, 15);
+    if(mode == 5 || mode == 6){ x = intRand(10, 15); }
+  } else if(current_level == 2){ // Normal: 5～6bit (16～63)
+    x = intRand(16, 63);
+  } else if(current_level == 3){ // Hard: 7～8bit (64～255)
+    x = intRand(64, 255);
+  } else if(current_level == 4){ // Very Hard: 9～10bit (256～1023)
+    x = intRand(256, 1023);
+  }
 }
+
 function intRand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 
 function correctAnswer(){
@@ -291,13 +319,9 @@ function enterPush(){
     resultBox.innerHTML=`<b style="color:red;">× 不正解！</b><br>${html}`;
   }
 
-  stats.textContent=`正答率: ${correctRate} / ${total}　スコア: ${Math.floor(score)}`;
+  stats.textContent=`正答率: ${correctRate} / ${total} スコア: ${Math.floor(score)}`;
   input.value="";
   if(set_mode==7){mode=Math.floor(Math.random()*6)+1;}else{mode=set_mode;}
-
-  if(levelChk.checked){
-    level_mode=(Math.random()<High_mode_Probability/100)?3:2;
-  }else level_mode=1;
 
   x_random();
   updateQuestion();
@@ -310,9 +334,10 @@ function formatNum(val,base){
 }
 
 function getPoint(){
-  if(level_mode==1)return e_point;
-  if(level_mode==2)return n_point;
-  if(level_mode==3)return h_point;
+  if(current_level==1)return e_point;
+  if(current_level==2)return n_point;
+  if(current_level==3)return h_point;
+  if(current_level==4)return vh_point;
 }
 
 function effect(t){
@@ -358,7 +383,6 @@ function getAllowedChars(){
   if(inputBase===16) return ["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"];
 }
 
-
 // キーの有効/無効更新
 function updateKeys(){
   const allowed=getAllowedChars();
@@ -379,8 +403,8 @@ modeSelect.addEventListener("change",()=>{
   mode=set_mode==7?Math.floor(Math.random()*6)+1:set_mode;
   x_random(); updateQuestion();
 });
-levelChk.addEventListener("change",()=>{
-  level_mode=levelChk.checked?2:1;
+levelSelect.addEventListener("change",()=>{
+  selected_level=parseInt(levelSelect.value);
   x_random(); updateQuestion();
 });
 allowNative.addEventListener("change",()=>{
